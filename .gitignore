@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+.env.local
+.feinai/
+docs/enunciado.pdf
+.DS_Store
+*.log
