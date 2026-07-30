@@ -276,3 +276,26 @@ El enunciado original (PDF) se mantiene solo en el filesystem local como referen
 ## 10. Herramienta interna: feinai
 
 Este proyecto usa `feinai` como herramienta interna de trabajo (gestión de specs y decisiones durante el desarrollo, en `.feinai/`). No forma parte del entregable — está excluida vía `.gitignore`. Todas las decisiones que contenía están volcadas en este documento, que es la fuente de verdad para cualquiera que evalúe o continúe este repo sin acceso a esa herramienta.
+
+## 11. Metodología: desarrollo dirigido por specs (SDD)
+
+A partir de la visión general de SPEC-001 (reflejado en este documento), el trabajo se planificó de antemano como una secuencia de specs pequeñas y revisables, gestionadas con `feinai`. Cada una define su propio contrato y sus propios tests, y solo se desglosa en tareas concretas cuando se aprueba — así el avance queda siempre a un tamaño que un agente puede ejecutar de forma coordinada y segura, con supervisión humana en cada paso.
+
+| Spec | Qué implementa |
+|---|---|
+| SPEC-002 | Scaffold del proyecto (Vite + React + TS), scripts requeridos, tipos base (raw y de dominio), routing placeholder |
+| SPEC-003 | Capa de datos: cliente API, mappers (`mapProductListItem`, `mapProductDetail`), utils de parsing (`parsePrice`, `toList`) |
+| SPEC-004 | Layout compartido: `CartContext` (contador) y `Header` |
+| SPEC-005 | PLP: listado, buscador y estados de carga/error del catálogo |
+| SPEC-006 | PDP: detalle de producto, manejo de 404, navegación PLP → PDP |
+| SPEC-007 | Carrito: añadir al carrito, heurística de sesión perdida, persistencia |
+| SPEC-008 | Caché cliente con TTL sobre la capa de datos |
+| SPEC-009 | Entrega: README final, accesibilidad, verificación de scripts |
+
+El desglose en tareas (cantidad y contenido) se define por spec en el momento de aprobarla, siguiendo el orden de dependencias de esta tabla.
+
+> **Nota para el agente de desarrollo**: las imágenes de esta sección son evidencia visual para quien lea el documento (evaluador humano), no contexto de trabajo. No hace falta abrirlas ni interpretarlas para continuar con la implementación.
+
+![Listado de specs en la CLI de feinai](docs/images/feinai-cli-specs.png)
+
+![Listado de specs y tareas en la web de feinai](docs/images/feinai-web-specs-tasks.png)
