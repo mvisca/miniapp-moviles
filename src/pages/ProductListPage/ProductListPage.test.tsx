@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Product } from '../../types/domain';
 import ProductListPage from './ProductListPage';
 
@@ -59,21 +59,85 @@ describe('ProductListPage', () => {
     expect(screen.queryByText('Cargando productos...')).not.toBeInTheDocument();
   });
 
-  it('muestra un mensaje de error con botón de reintentar cuando el fetch falla', async () => {
-    getProductsMock.mockRejectedValueOnce(new Error('network error'));
-
-    renderPage();
-
-    const retryButton = await screen.findByRole('button', { name: /reintentar/i });
-    expect(retryButton).toBeInTheDocument();
-
-    getProductsMock.mockResolvedValueOnce(products);
-    await userEvent.click(retryButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('Acer')).toBeInTheDocument();
+  // TDD (TASK-011-3, ver SPEC-011 "Tests required" sección
+  // ProductListPage/ProductDetailPage): el fetch simple se reemplaza por
+  // useRetryingFetch con backoff lineal [2,4,6,8,10]s. Un solo fallo ya no
+  // cae directo a error manual -- pasa primero por 'retrying'.
+  describe('reintentos automáticos con backoff (SPEC-011)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
     });
-    expect(getProductsMock).toHaveBeenCalledTimes(2);
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('reintenta automáticamente tras un fallo inicial y termina en éxito sin intervención del usuario', async () => {
+      getProductsMock
+        .mockRejectedValueOnce(new Error('network error'))
+        .mockResolvedValueOnce(products);
+
+      renderPage();
+
+      // Falla el intento inicial -> pasa a 'retrying' con countdown, sin
+      // que el usuario haga nada.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+
+      expect(screen.getByText(/reintentando en 2s/i)).toBeInTheDocument();
+
+      // Se cumple el delay de 2s -> segundo intento, que resuelve con éxito.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+
+      expect(screen.getByText('Acer')).toBeInTheDocument();
+      expect(screen.queryByText(/reintentando en/i)).not.toBeInTheDocument();
+      expect(getProductsMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('agota los reintentos automáticos y cae al estado de error manual con botón "Reintentar"', async () => {
+      getProductsMock.mockRejectedValue(new Error('network error'));
+
+      renderPage();
+
+      // Intento inicial + 5 reintentos automáticos (delays 2,4,6,8,10s).
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(4000);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(6000);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(8000);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10000);
+      });
+
+      const retryButton = screen.getByRole('button', { name: /reintentar/i });
+      expect(retryButton).toBeInTheDocument();
+      expect(getProductsMock).toHaveBeenCalledTimes(6);
+
+      // El botón "Reintentar" ahora llama a retry() del hook, que reinicia
+      // el ciclo completo desde el intento 1.
+      getProductsMock.mockResolvedValueOnce(products);
+
+      await act(async () => {
+        fireEvent.click(retryButton);
+        await vi.advanceTimersByTimeAsync(0);
+      });
+
+      expect(screen.getByText('Acer')).toBeInTheDocument();
+      expect(getProductsMock).toHaveBeenCalledTimes(7);
+    });
   });
 
   it('filtra la grilla en tiempo real por marca + modelo', async () => {

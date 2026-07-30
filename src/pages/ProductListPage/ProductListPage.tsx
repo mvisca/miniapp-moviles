@@ -1,58 +1,48 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { getProducts } from '../../api/products'
 import ProductItem from '../../components/ProductItem/ProductItem'
+import RetryCountdown from '../../components/RetryCountdown/RetryCountdown'
 import Search from '../../components/Search/Search'
-import type { Product } from '../../types/domain'
+import { useRetryingFetch } from '../../hooks/useRetryingFetch'
 import styles from './ProductListPage.module.css'
 
-type Status = 'loading' | 'error' | 'success'
+// Número de reintentos automáticos definido en SPEC-011 (delays
+// [2,4,6,8,10]s). Detalle de configuración de esta página, no algo que
+// exponga useRetryingFetch -- se declara como constante local.
+const TOTAL_ATTEMPTS = 5
 
-// PLP (SPEC-005, TASK-005-2): fetchea el catálogo con getProducts() en un
-// useEffect y maneja el estado a mano (sin librería de fetching, ver
-// plan_content). `reloadKey` es la dependencia que dispara un nuevo fetch al
-// pulsar "Reintentar" tras un error. El filtro de búsqueda se deriva en cada
-// render sobre `products` -- no hay estado ni efecto separado para la lista
-// filtrada (CLAUDE.md §6). No implementa caché (SPEC-008) ni contenido de la
-// PDP (SPEC-006): solo necesita que el Link de ProductItem exista.
+// PLP (SPEC-005/SPEC-011, TASK-011-3): fetchea el catálogo con
+// useRetryingFetch(getProducts), que reemplaza el useEffect + useState<Status>
+// manual anterior por reintentos automáticos en backoff lineal ante el
+// cold-start del backend (Render free tier). El filtro de búsqueda se sigue
+// derivando en cada render sobre `products` -- no hay estado ni efecto
+// separado para la lista filtrada (CLAUDE.md §6).
 function ProductListPage() {
-  const [status, setStatus] = useState<Status>('loading')
-  const [products, setProducts] = useState<Product[]>([])
+  const { status, data, attempt, secondsRemaining, retry } = useRetryingFetch(getProducts, {
+    deps: [],
+  })
   const [searchTerm, setSearchTerm] = useState('')
-  const [reloadKey, setReloadKey] = useState(0)
-
-  useEffect(() => {
-    let cancelled = false
-
-    getProducts()
-      .then((result) => {
-        if (cancelled) return
-        setProducts(result)
-        setStatus('success')
-      })
-      .catch(() => {
-        if (cancelled) return
-        setStatus('error')
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [reloadKey])
-
-  const handleRetry = () => {
-    setStatus('loading')
-    setReloadKey((key) => key + 1)
-  }
+  const products = data ?? []
 
   if (status === 'loading') {
     return <p className={styles.message}>Cargando productos...</p>
+  }
+
+  if (status === 'retrying') {
+    return (
+      <RetryCountdown
+        attempt={attempt}
+        totalAttempts={TOTAL_ATTEMPTS}
+        secondsRemaining={secondsRemaining ?? 0}
+      />
+    )
   }
 
   if (status === 'error') {
     return (
       <div className={styles.message}>
         <p>No se pudo cargar el catálogo de productos.</p>
-        <button type="button" className={styles.retryButton} onClick={handleRetry}>
+        <button type="button" className={styles.retryButton} onClick={retry}>
           Reintentar
         </button>
       </div>
