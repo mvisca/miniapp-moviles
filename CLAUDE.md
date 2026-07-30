@@ -21,6 +21,7 @@ Backend real: `https://itx-frontend-test.onrender.com` (API REST ya provista, no
 | Gestor de paquetes | pnpm (se documenta alternativa con npm en README) |
 | Estado global | React Context (solo contador de carrito) |
 | Estilos | CSS Modules |
+| Identidad visual | Paleta clara "Paper & Ink" (superficies blancas, acento índigo) + tipografía Space Grotesk/Inter/JetBrains Mono, animaciones mínimas — SPEC-010 |
 | Colores dinámicos | Mapping a clases CSS completas (`colorMap[code]`), nunca cadenas construidas dinámicamente |
 | Validación runtime del API | Funciones defensivas puntuales (`parsePrice`, `toList`) sobre las inconsistencias reales encontradas — ver §4.5 |
 | Versionado de dependencias | Versiones exactas en `package.json` (sin `^`/`~`), fijadas también por el lockfile de pnpm. Garantizado por `save-exact=true` en `.npmrc` (raíz del repo, versionado) — válido tanto con `pnpm add` como con `npm install`. Evita que una actualización menor/patch de una dependencia rompa el build sin que medie una decisión explícita de subir versión |
@@ -168,17 +169,18 @@ Las únicas inconsistencias reales encontradas (precio vacío, campos polimórfi
 
 **PLP (`ProductListPage`)**: listado con buscador (filtra por marca + modelo en tiempo real) y grilla de `ProductItem` (imagen, marca, modelo, precio o "No disponible"). Si el filtro no matchea ningún producto, la grilla se reemplaza por un estado vacío con el mensaje "No se encontraron resultados para «‹término›»" — no se oculta el buscador ni se resetea el término.
 
-Mientras `GET /api/product` está en curso, se muestra un mensaje simple de "Cargando productos...". Si el fetch falla (error de red o respuesta no-2xx — relevante por el cold-start del free tier de Render, que puede demorar la primera respuesta), se muestra un mensaje de error con un botón para reintentar la carga.
+Mientras `GET /api/product` está en curso, se muestra un mensaje simple de "Cargando productos...". Si el primer intento falla (error de red o respuesta no-2xx — relevante por el cold-start del free tier de Render), se reintenta automáticamente en backoff lineal (2, 4, 6, 8, 10 s) con countdown visible y aviso de que el servidor puede estar "dormido"; agotados esos reintentos, se muestra el mensaje de error con un botón para reintentar a mano (SPEC-011).
 
 **PDP (`ProductDetailPage`)**, dividido en tres bloques:
 - `ProductImage`: imagen del producto.
 - `ProductDescription`: specs — marca, modelo, precio, CPU, RAM, sistema operativo, resolución de pantalla, batería, cámaras (trasera y frontal como líneas separadas), dimensiones, peso.
-- `ProductActions`: selectores de almacenamiento y color (poblados exclusivamente desde `options`, ver §4.1) + botón de añadir al carrito (deshabilitado si `price` es `null`).
+- `ProductActions`: selectores de almacenamiento y color (poblados exclusivamente desde `options`, ver §4.1) + botón de añadir al carrito (deshabilitado si `price` es `null`), con feedback visual de éxito/error tras el click ("Añadiendo…" → "✓ Añadido al carrito" o aviso de error, revierte a los ~2 s — SPEC-011).
 
-Si `GET /api/product/:id` devuelve `404` (id inexistente), se muestra el mensaje "Producto no encontrado" con un enlace de vuelta a la PLP — no hay redirect automático, la decisión de volver es del usuario.
+Si `GET /api/product/:id` devuelve `404` (id inexistente), se muestra el mensaje "Producto no encontrado" con un enlace de vuelta a la PLP — no hay redirect automático, la decisión de volver es del usuario. Un `404` es una respuesta válida del servidor, no un fallo: queda exceptuado de los reintentos automáticos; cualquier otro error (red, 5xx) sigue el mismo mecanismo de backoff lineal que la PLP.
 
 **`Header`**, presente en todas las vistas, requerido por el enunciado:
 - Título/logo enlazado a la PLP (vuelve al listado desde cualquier vista).
+- Navbar sticky (permanece visible al hacer scroll). En viewport angosto (`<640px`) el breadcrumb baja a una segunda línea, debajo de logo/contador — solo CSS, sin cambio de contenido (SPEC-010).
 - Breadcrumbs de la ruta actual (p. ej. `Inicio` en PLP; `Inicio / ‹marca› ‹modelo›` en PDP). Mientras el detalle del producto está en curso de carga, el segundo segmento se muestra como una elipsis animada (`.` → `..` → `...`, en loop), reemplazada por `‹marca› ‹modelo›` en cuanto llega la respuesta.
 - Contador de carrito, siempre visible, reflejando el `count` vigente.
 
@@ -297,6 +299,8 @@ A partir de la visión general de SPEC-001 (reflejado en este documento), el tra
 | SPEC-007 | Carrito: añadir al carrito, heurística de sesión perdida, persistencia |
 | SPEC-008 | Caché cliente con TTL sobre la capa de datos |
 | SPEC-009 | Entrega: README final, accesibilidad, verificación de scripts |
+| SPEC-010 | Rediseño visual: paleta, tipografía, animaciones y layout (navbar sticky, breadcrumb en mobile) |
+| SPEC-011 | Feedback de éxito/error al añadir al carrito + reintentos automáticos con backoff lineal ante cold-start del backend |
 
 El desglose en tareas (cantidad y contenido) se define por spec en el momento de aprobarla, siguiendo el orden de dependencias de esta tabla.
 
