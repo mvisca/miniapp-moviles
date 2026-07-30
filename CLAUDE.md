@@ -14,7 +14,7 @@ Backend real: `https://itx-frontend-test.onrender.com` (API REST ya provista, no
 |---|---|
 | Framework | React 19 |
 | Lenguaje | TypeScript estricto |
-| Bundler | Vite 5 |
+| Bundler | Vite 8 |
 | Routing | React Router DOM v6 (Browser Router, sin `#`) |
 | Testing | Vitest + React Testing Library |
 | Linter | ESLint 10.8.0 (flat config), incluido con el scaffold de Vite + `@vitejs/plugin-react` — versión confirmada por el scaffold instalado; se esperaba una 9.x, pero `create-vite` trae la última major disponible en el momento del scaffold |
