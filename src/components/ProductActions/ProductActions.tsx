@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ProductDetail } from '../../types/domain';
+import { getColorSwatches } from '../../utils/colorSwatches';
+import { normalizeStorageName } from '../../utils/normalizeStorageName';
 import styles from './ProductActions.module.css';
 
 type Feedback = 'idle' | 'pending' | 'success' | 'error';
@@ -22,16 +24,62 @@ interface ProductActionsProps {
 const FEEDBACK_LABEL: Record<Feedback, string> = {
   idle: 'Añadir al carrito',
   pending: 'Añadiendo…',
-  success: '✓ Añadido al carrito',
+  success: '¡Ya está en el carrito!',
   error: 'No se pudo añadir, probá de nuevo',
 };
 
 /**
- * Presentacional (SPEC-006, CLAUDE.md §6/§4.1): selectores de storage y
- * color poblados EXCLUSIVAMENTE desde `product.storages` / `product.colors`
- * — nunca un valor hardcodeado ni fuera de esa lista, para que el frontend
- * nunca pueda enviar un código inválido a `POST /api/cart`. Botón "Añadir
- * al carrito" deshabilitado cuando `product.price` es `null`.
+ * Preselección (CLAUDE.md §6): si hay una única opción, se preselecciona
+ * — no hay nada que elegir. Si hay más de una, ninguna viene preseleccionada
+ * hasta que el usuario elija explícitamente un botón.
+ */
+function defaultSelection<T extends { code: number }>(options: T[]): number | undefined {
+  return options.length === 1 ? options[0].code : undefined;
+}
+
+/** Círculo de color simple, o stack superpuesto si el nombre resuelve a >1 color. */
+function ColorSwatch({ name }: { name: string }) {
+  const swatches = getColorSwatches(name);
+
+  if (!swatches) {
+    return (
+      <span className={styles.swatchStack}>
+        <span className={`${styles.swatch} ${styles.swatchUnknown}`} aria-hidden="true">
+          ✕
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span className={styles.swatchStack}>
+      {swatches.map((hex, i) => (
+        <span
+          key={`${hex}-${i}`}
+          className={styles.swatch}
+          style={{ background: hex, zIndex: swatches.length - i }}
+          aria-hidden="true"
+        />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * Presentacional (SPEC-006, CLAUDE.md §6/§4.1): opciones de storage y color
+ * pobladas EXCLUSIVAMENTE desde `product.storages` / `product.colors` —
+ * nunca un valor hardcodeado ni fuera de esa lista, para que el frontend
+ * nunca pueda enviar un código inválido a `POST /api/cart`. Botones tipo
+ * radio en vez de `<select>`: color con swatch (o stack, o X roja si el
+ * nombre no resuelve a un color conocido — ver `getColorSwatches`) +
+ * nombre debajo; storage con el nombre normalizado (`normalizeStorageName`)
+ * — separados por una línea divisoria (vertical en desktop, horizontal en
+ * mobile).
+ *
+ * Botón "Añadir al carrito" deshabilitado cuando `product.price` es `null`,
+ * o mientras falte elegir color/storage en un grupo con más de una opción
+ * (nada preseleccionado ahí, ver `defaultSelection`) — evita enviar un
+ * `colorCode`/`storageCode` `undefined`, que el API rechaza con 400.
  *
  * Feedback de éxito/error (SPEC-011, TASK-011-2): estado local
  * `idle -> pending -> success | error -> idle` (revierte automáticamente
@@ -40,10 +88,10 @@ const FEEDBACK_LABEL: Record<Feedback, string> = {
  */
 function ProductActions({ product, onAddToCart }: ProductActionsProps) {
   const [storageCode, setStorageCode] = useState<number | undefined>(
-    product.storages[0]?.code,
+    defaultSelection(product.storages),
   );
   const [colorCode, setColorCode] = useState<number | undefined>(
-    product.colors[0]?.code,
+    defaultSelection(product.colors),
   );
   const [feedback, setFeedback] = useState<Feedback>('idle');
   const revertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,6 +105,9 @@ function ProductActions({ product, onAddToCart }: ProductActionsProps) {
   }, []);
 
   const isAvailable = product.price !== null;
+  const hasSelection =
+    (product.storages.length === 0 || storageCode !== undefined) &&
+    (product.colors.length === 0 || colorCode !== undefined);
 
   function scheduleRevertToIdle() {
     if (revertTimeoutRef.current !== null) {
@@ -83,45 +134,69 @@ function ProductActions({ product, onAddToCart }: ProductActionsProps) {
 
   return (
     <div className={styles.actions}>
-      <div className={styles.field}>
-        <label htmlFor="product-storage">Almacenamiento</label>
-        <select
-          id="product-storage"
-          value={storageCode ?? ''}
-          onChange={(e) => setStorageCode(Number(e.target.value))}
-        >
-          {product.storages.map((storage) => (
-            <option key={storage.code} value={storage.code}>
-              {storage.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <div className={styles.optionGroups}>
+        <div className={styles.field} role="radiogroup" aria-label="Color">
+          <span className={styles.label}>Color</span>
+          <div className={styles.optionButtons}>
+            {product.colors.map((color) => (
+              <button
+                key={color.code}
+                type="button"
+                role="radio"
+                aria-checked={colorCode === color.code}
+                className={`${styles.optionButton} ${
+                  colorCode === color.code ? styles.optionButtonSelected : ''
+                }`}
+                onClick={() => setColorCode(color.code)}
+              >
+                <ColorSwatch name={color.name} />
+                <span className={styles.optionName}>{color.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-      <div className={styles.field}>
-        <label htmlFor="product-color">Color</label>
-        <select
-          id="product-color"
-          value={colorCode ?? ''}
-          onChange={(e) => setColorCode(Number(e.target.value))}
-        >
-          {product.colors.map((color) => (
-            <option key={color.code} value={color.code}>
-              {color.name}
-            </option>
-          ))}
-        </select>
+        <div className={styles.divider} aria-hidden="true" />
+
+        <div className={styles.field} role="radiogroup" aria-label="Almacenamiento">
+          <span className={styles.label}>Almacenamiento</span>
+          <div className={styles.optionButtons}>
+            {product.storages.map((storage) => (
+              <button
+                key={storage.code}
+                type="button"
+                role="radio"
+                aria-checked={storageCode === storage.code}
+                className={`${styles.optionButton} ${
+                  storageCode === storage.code ? styles.optionButtonSelected : ''
+                }`}
+                onClick={() => setStorageCode(storage.code)}
+              >
+                <span className={styles.optionName}>{normalizeStorageName(storage.name)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <button
         type="button"
-        className={`${styles.addButton} ${feedback === 'success' ? styles.addButtonSuccess : ''} ${
-          feedback === 'error' ? styles.addButtonError : ''
-        }`}
-        disabled={!isAvailable || feedback === 'pending'}
+        className={`${styles.addButton} ${feedback === 'pending' ? styles.addButtonPending : ''} ${
+          feedback === 'success' ? styles.addButtonSuccess : ''
+        } ${feedback === 'error' ? styles.addButtonError : ''}`}
+        disabled={!isAvailable || !hasSelection || feedback === 'pending'}
         onClick={handleAddToCart}
       >
-        {isAvailable ? FEEDBACK_LABEL[feedback] : 'Añadir al carrito'}
+        {feedback === 'pending' ? (
+          <>
+            <span className={styles.spinner} aria-hidden="true" />
+            <span className={styles.srOnly}>{FEEDBACK_LABEL.pending}</span>
+          </>
+        ) : isAvailable ? (
+          FEEDBACK_LABEL[feedback]
+        ) : (
+          'Añadir al carrito'
+        )}
       </button>
     </div>
   );
