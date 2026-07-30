@@ -12,9 +12,12 @@ import ProductListPage from './ProductListPage';
 //   el buscador ni resetear el término (CLAUDE.md §6).
 vi.mock('../../api/products');
 
-import { getProducts } from '../../api/products';
+import { getProductDetail, getProducts } from '../../api/products';
+import type { ProductDetail } from '../../types/domain';
+import App from '../../App';
 
 const getProductsMock = vi.mocked(getProducts);
+const getProductDetailMock = vi.mocked(getProductDetail);
 
 const products: Product[] = [
   { id: '1', brand: 'Acer', model: 'Liquid E700', price: 299, imgUrl: 'https://example.com/1.png' },
@@ -101,5 +104,53 @@ describe('ProductListPage', () => {
     expect(screen.queryByText('Acer')).not.toBeInTheDocument();
     expect(screen.queryByText('Samsung')).not.toBeInTheDocument();
     expect(input).toHaveValue('nokia');
+  });
+});
+
+// Integración PLP -> PDP (TASK-006-5, ver "Tests required" de SPEC-006):
+// click en un ProductItem navega al detalle correcto. Renderiza la app
+// completa (mismo patrón de routing que App.tsx: '/' -> ProductListPage,
+// '/product/:id' -> ProductDetailPage) para ejercitar la navegación real de
+// React Router, no solo el atributo `to` del Link (ya cubierto por
+// ProductItem.test.tsx).
+const productDetail: ProductDetail = {
+  id: '1',
+  brand: 'Acer',
+  model: 'Liquid E700',
+  price: 299,
+  imgUrl: 'https://example.com/1.png',
+  cpu: 'ST Ericsson PNX6715',
+  ram: '2 GB RAM or 4 GB',
+  os: 'Android 4.4.4 (KitKat)',
+  screenResolution: '480 x 854 pixels',
+  battery: '1500 mAh',
+  rearCamera: '5 MP',
+  frontCamera: 'No',
+  dimensions: '123 x 62 x 11.5 mm',
+  weight: '135 g',
+  colors: [{ code: 1, name: 'Negro' }],
+  storages: [{ code: 1, name: '4 GB' }],
+};
+
+describe('Integración PLP -> PDP', () => {
+  it('click en un ProductItem navega al detalle correcto', async () => {
+    getProductsMock.mockResolvedValueOnce(products);
+    getProductDetailMock.mockResolvedValueOnce(productDetail);
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('Acer');
+
+    const link = screen.getByRole('link', { name: /Acer.*Liquid E700/s });
+    await userEvent.click(link);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Liquid E700' }),
+    ).toBeInTheDocument();
+    expect(getProductDetailMock).toHaveBeenCalledWith('1');
   });
 });
