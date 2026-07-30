@@ -59,9 +59,17 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function getProductDetail(id: string): Promise<ProductDetail> {
+  const cacheKey = `product_detail_${id}`
+  const cached = getCached<ProductDetail>(cacheKey)
+  if (cached !== null) {
+    return cached
+  }
+
   // No se captura el ApiError: debe propagar sin capturar para que quien
   // consuma esta función (la PDP, SPEC-006) pueda distinguir un 404 de
-  // otros fallos.
+  // otros fallos. Al no capturarlo, tampoco se cachea una respuesta fallida.
   const raw = await request<ProductDetailRaw>(`/api/product/${id}`)
-  return mapProductDetail(raw)
+  const mapped = mapProductDetail(raw)
+  setCached(cacheKey, mapped)
+  return mapped
 }

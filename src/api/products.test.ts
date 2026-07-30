@@ -13,7 +13,7 @@ import {
   mapProductListItem,
 } from './products'
 import { setCached } from '../utils/cache'
-import type { Product } from '../types/domain'
+import type { Product, ProductDetail } from '../types/domain'
 
 const requestMock = vi.mocked(request)
 
@@ -216,5 +216,72 @@ describe('getProductDetail', () => {
     requestMock.mockRejectedValueOnce(error)
 
     await expect(getProductDetail('does-not-exist')).rejects.toBe(error)
+  })
+
+  it('cache miss: caches the mapped result, so a second call for the same id does not refetch', async () => {
+    requestMock.mockResolvedValueOnce(raw)
+
+    const first = await getProductDetail('1')
+    const second = await getProductDetail('1')
+
+    expect(requestMock).toHaveBeenCalledTimes(1)
+    expect(requestMock).toHaveBeenCalledWith('/api/product/1')
+    expect(second).toEqual(first)
+    expect(localStorage.getItem('product_detail_1')).not.toBeNull()
+  })
+
+  it('cache hit: returns the cached data without calling request', async () => {
+    const cachedDetail: ProductDetail = mapProductDetail(raw)
+    setCached('product_detail_1', cachedDetail)
+
+    const result = await getProductDetail('1')
+
+    expect(result).toEqual(cachedDetail)
+    expect(requestMock).not.toHaveBeenCalled()
+  })
+
+  it('expired cache: refetches instead of returning the stale entry', async () => {
+    vi.useFakeTimers()
+    const cachedDetail: ProductDetail = mapProductDetail(raw)
+    setCached('product_detail_1', cachedDetail)
+
+    vi.advanceTimersByTime(3600_000 + 1)
+
+    requestMock.mockResolvedValueOnce(raw)
+
+    const result = await getProductDetail('1')
+
+    expect(result).toEqual(cachedDetail)
+    expect(requestMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not cache a failed request (404 / ApiError)', async () => {
+    const error = new Error('not found')
+    requestMock.mockRejectedValueOnce(error)
+
+    await expect(getProductDetail('does-not-exist')).rejects.toBe(error)
+
+    expect(localStorage.getItem('product_detail_does-not-exist')).toBeNull()
+  })
+
+  it('caches two different ids independently', async () => {
+    const raw2: ProductDetailRaw = { ...raw, id: '2', brand: 'Acer', model: 'A2' }
+    requestMock.mockResolvedValueOnce(raw).mockResolvedValueOnce(raw2)
+
+    const detail1 = await getProductDetail('1')
+    const detail2 = await getProductDetail('2')
+
+    expect(requestMock).toHaveBeenCalledTimes(2)
+    expect(requestMock).toHaveBeenNthCalledWith(1, '/api/product/1')
+    expect(requestMock).toHaveBeenNthCalledWith(2, '/api/product/2')
+
+    // Refetching either id again should hit cache, not request, and not
+    // disturb the other id's entry.
+    const detail1Again = await getProductDetail('1')
+    const detail2Again = await getProductDetail('2')
+
+    expect(requestMock).toHaveBeenCalledTimes(2)
+    expect(detail1Again).toEqual(detail1)
+    expect(detail2Again).toEqual(detail2)
   })
 })
