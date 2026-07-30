@@ -1,19 +1,40 @@
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
   padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid #e2e2e2;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+/*
+ * En desktop, .row se disuelve (display: contents) y sus hijos (brand,
+ * cart, aviso de sesión) pasan a ser ítems flex directos de .header, junto
+ * a .breadcrumbs — así el `order` de cada uno decide el orden visual y el
+ * breadcrumb queda inline entre brand y cart sin tocar el DOM.
+ *
+ * En mobile (<640px), .row vuelve a ser un contenedor flex propio que
+ * agrupa brand + cart en una sola línea; .breadcrumbs cae a su propia
+ * línea debajo, vía flex-wrap del .header. Sin JS de por medio.
+ */
+.row {
+  display: contents;
 }
 
 .brand {
+  order: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
-  color: inherit;
-  font-weight: 700;
+  color: var(--text-h);
+  font-family: var(--heading);
+  font-weight: 600;
   font-size: 1.125rem;
 }
 
@@ -23,13 +44,35 @@
 }
 
 .breadcrumbs {
-  flex: 1;
-  margin: 0 1rem;
+  order: 1;
+  flex: 1 1 auto;
   font-size: 0.875rem;
-  color: #555;
+  color: var(--text);
 }
 
 .cart {
+  order: 2;
+  font-family: var(--mono);
   font-size: 0.9375rem;
   font-weight: 600;
+  color: var(--text-h);
+  background: var(--accent-bg);
+  border-radius: var(--radius-lg);
+  padding: 0.25rem 0.75rem;
+}
+
+@media (max-width: 639px) {
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex: 1 1 100%;
+    order: 0;
+  }
+
+  .breadcrumbs {
+    order: 1;
+    flex: 1 1 100%;
+  }
 }

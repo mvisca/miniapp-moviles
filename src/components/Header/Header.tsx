@@ -38,10 +38,15 @@ function Header() {
 
   return (
     <header className={styles.header}>
-      <Link to="/" className={styles.brand}>
-        <img src={logo} alt="" className={styles.logo} />
-        <span>Miniapp Móviles</span>
-      </Link>
+      <div className={styles.row}>
+        <Link to="/" className={styles.brand}>
+          <img src={logo} alt="" className={styles.logo} />
+          <span>Miniapp Móviles</span>
+        </Link>
+
+        <span className={styles.cart}>{count}</span>
+        {sessionLostNotice && <span role="status">{sessionLostNotice}</span>}
+      </div>
 
       <nav className={styles.breadcrumbs} aria-label="breadcrumb">
         <span>Inicio</span>
@@ -52,9 +57,6 @@ function Header() {
           </>
         )}
       </nav>
-
-      <span className={styles.cart}>{count}</span>
-      {sessionLostNotice && <span role="status">{sessionLostNotice}</span>}
     </header>
   );
 }
