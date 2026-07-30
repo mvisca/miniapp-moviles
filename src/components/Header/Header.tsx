@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import logo from '../../assets/logo.svg';
 import { useCart } from '../../context/CartContext';
+import { useProductTitle } from '../../context/ProductTitleContext';
 import styles from './Header.module.css';
 
 /**
@@ -31,6 +32,7 @@ function LoadingEllipsis() {
  */
 function Header() {
   const { count } = useCart();
+  const { title } = useProductTitle();
   const location = useLocation();
   const isProductDetail = location.pathname.startsWith('/product/');
 
@@ -46,7 +48,7 @@ function Header() {
         {isProductDetail && (
           <>
             {' / '}
-            <LoadingEllipsis />
+            {title ? <span>{title}</span> : <LoadingEllipsis />}
           </>
         )}
       </nav>
