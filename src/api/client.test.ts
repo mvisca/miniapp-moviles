@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, request } from './client'
 
-const BASE_URL = 'https://itx-frontend-test.onrender.com'
+const BASE_URL = ''
 
 function mockFetchOnce(response: {
   ok: boolean

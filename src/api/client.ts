@@ -2,7 +2,7 @@
 // Sin reintentos, sin timeouts, sin caché — fuera de alcance de SPEC-003
 // (la caché se agrega en SPEC-008, por encima de esta capa).
 
-const BASE_URL = 'https://itx-frontend-test.onrender.com'
+const BASE_URL = ''
 
 // Preserva el status HTTP para que quien consuma la API (p. ej.
 // getProductDetail en TASK-003-2) pueda distinguir un 404 de otros fallos.
