@@ -42,3 +42,23 @@
 .message p {
   margin: 0 0 0.5rem;
 }
+
+.retryButton {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--sans);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.15s ease;
+}
+
+.retryButton:hover {
+  background: var(--accent-hover);
+}
+
+.retryButton:active {
+  transform: scale(0.97);
+}

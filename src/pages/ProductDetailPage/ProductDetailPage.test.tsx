@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -20,6 +20,26 @@ import ProductDetailPage from './ProductDetailPage';
 // TASK-007-2 agrega: click en "Añadir al carrito" invoca `addToCart`
 // (mockeado) con el id del producto y los códigos de color/almacenamiento
 // inicialmente seleccionados (los primeros de `options`).
+//
+// TASK-011-4 agrega (ver "Tests required" de SPEC-011): integración de
+// `useRetryingFetch` + `RetryCountdown` en la PDP, con fake timers (mismo
+// patrón que useRetryingFetch.test.ts) para los casos de reintento
+// automático y agotamiento de reintentos; un 404 sigue yendo directo a
+// "Producto no encontrado" sin pasar por `retrying`.
+
+/** Flushea microtasks pendientes (resoluciones/rechazos de promesas) sin avanzar el reloj. */
+async function flush() {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
+  });
+}
+
+/** Avanza el reloj fake `ms` y flushea las promesas resultantes de timers que se disparen. */
+async function advance(ms: number) {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(ms);
+  });
+}
 
 vi.mock('../../api/products');
 vi.mock('../../api/cart');
@@ -104,12 +124,86 @@ describe('ProductDetailPage', () => {
     expect(screen.getByRole('link', { name: /volver al listado/i })).toBeInTheDocument();
   });
 
-  it('muestra un mensaje de error genérico ante un fallo que no es 404', async () => {
-    getProductDetailMock.mockRejectedValueOnce(new Error('network error'));
+  it('un 404 va directo a "Producto no encontrado" sin pasar por reintentos', async () => {
+    vi.useFakeTimers();
+    try {
+      getProductDetailMock.mockRejectedValueOnce(new ApiError(404, 'Not found'));
 
-    renderPage();
+      renderPage('inexistente');
 
-    expect(await screen.findByText('No se pudo cargar el producto.')).toBeInTheDocument();
+      await flush();
+
+      expect(screen.getByText('Producto no encontrado')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /volver al listado/i })).toBeInTheDocument();
+      expect(getProductDetailMock).toHaveBeenCalledTimes(1);
+
+      // Ningún timer de reintento agendado: avanzar el reloj no dispara más fetches.
+      await advance(60000);
+      expect(getProductDetailMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('reintenta automáticamente tras un fallo y termina en éxito sin intervención del usuario', async () => {
+    vi.useFakeTimers();
+    try {
+      getProductDetailMock.mockRejectedValueOnce(new Error('network error'));
+      getProductDetailMock.mockResolvedValueOnce(product);
+
+      renderPage();
+
+      await flush();
+      expect(
+        screen.getByText(/El servidor no está despierto todavía/),
+      ).toBeInTheDocument();
+      expect(getProductDetailMock).toHaveBeenCalledTimes(1);
+
+      // Se cumple el primer delay (2s) -> segundo intento, que resuelve con éxito.
+      await advance(2000);
+
+      expect(screen.getByText('Acer')).toBeInTheDocument();
+      expect(getProductDetailMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('agota los reintentos automáticos y cae al estado de error manual con botón "Reintentar"', async () => {
+    vi.useFakeTimers();
+    try {
+      getProductDetailMock.mockRejectedValue(new Error('always fails'));
+
+      renderPage();
+
+      // Intento inicial (1) + 5 reintentos = 6 intentos totales, delays [2,4,6,8,10].
+      await flush();
+      expect(
+        screen.getByText(/El servidor no está despierto todavía/),
+      ).toBeInTheDocument();
+
+      await advance(2000);
+      await advance(4000);
+      await advance(6000);
+      await advance(8000);
+      await advance(10000);
+
+      expect(screen.getByText('No se pudo cargar el producto.')).toBeInTheDocument();
+      expect(getProductDetailMock).toHaveBeenCalledTimes(6);
+
+      const retryButton = screen.getByRole('button', { name: /reintentar/i });
+      getProductDetailMock.mockResolvedValueOnce(product);
+
+      await act(async () => {
+        retryButton.click();
+        await vi.advanceTimersByTimeAsync(0);
+      });
+
+      expect(screen.getByText('Acer')).toBeInTheDocument();
+      expect(getProductDetailMock).toHaveBeenCalledTimes(7);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('click en "Añadir al carrito" llama a addToCart con el id y los códigos seleccionados', async () => {
