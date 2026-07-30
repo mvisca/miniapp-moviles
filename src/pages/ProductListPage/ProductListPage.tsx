@@ -52,7 +52,7 @@ function ProductListPage() {
     return (
       <div className={styles.message}>
         <p>No se pudo cargar el catálogo de productos.</p>
-        <button type="button" onClick={handleRetry}>
+        <button type="button" className={styles.retryButton} onClick={handleRetry}>
           Reintentar
         </button>
       </div>
@@ -71,7 +71,7 @@ function ProductListPage() {
       {filtered.length === 0 ? (
         <p className={styles.empty}>No se encontraron resultados para «{searchTerm}»</p>
       ) : (
-        <div className={styles.grid}>
+        <div className={`${styles.grid} fadeIn`}>
           {filtered.map((product) => (
             <ProductItem key={product.id} product={product} />
           ))}

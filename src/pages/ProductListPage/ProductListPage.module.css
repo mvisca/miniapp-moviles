@@ -2,22 +2,51 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding: 1.5rem;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 1.5rem clamp(1rem, 4vw, 2rem);
 }
 
 .message {
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
   text-align: center;
+  color: var(--text);
+  font-family: var(--sans);
 }
 
 .empty {
-  padding: 2rem;
+  padding: 3rem 1rem;
   text-align: center;
-  color: #555;
+  color: var(--text);
+  font-family: var(--sans);
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.25rem;
+}
+
+.retryButton {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--sans);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.15s ease;
+}
+
+.retryButton:hover {
+  background: var(--accent-hover);
+}
+
+.retryButton:active {
+  transform: scale(0.97);
 }
