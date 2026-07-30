@@ -31,7 +31,7 @@ function LoadingEllipsis() {
  * CartContext.
  */
 function Header() {
-  const { count } = useCart();
+  const { count, sessionLostNotice } = useCart();
   const { title } = useProductTitle();
   const location = useLocation();
   const isProductDetail = location.pathname.startsWith('/product/');
@@ -54,6 +54,7 @@ function Header() {
       </nav>
 
       <span className={styles.cart}>{count}</span>
+      {sessionLostNotice && <span role="status">{sessionLostNotice}</span>}
     </header>
   );
 }

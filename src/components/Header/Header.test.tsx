@@ -1,10 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { useEffect } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { CartProvider } from '../../context/CartContext';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { addToCart } from '../../api/cart';
+import { CartProvider, useCart } from '../../context/CartContext';
 import { ProductTitleProvider, useProductTitle } from '../../context/ProductTitleContext';
 import Header from './Header';
+
+vi.mock('../../api/cart');
+
+const mockedAddToCart = vi.mocked(addToCart);
 
 // TDD baseline (TASK-004-1, ver sección "Tests required" de SPEC-004,
 // TASK-006-0 para el consumo de ProductTitleContext):
@@ -57,9 +62,38 @@ function renderHeaderWithTitleAt(path: string, title: string) {
   );
 }
 
+// Dispara addItem con una sesión perdida (isValidIncrement da false) antes
+// de renderizar el Header, simulando el estado que produciría un click en
+// "añadir al carrito" tras un spin-down del backend (TASK-007-2 cablea el
+// call site real — fuera de alcance aquí).
+function TriggerSessionLostThenHeader() {
+  const { addItem } = useCart();
+
+  useEffect(() => {
+    void addItem('some-id', 1, 2);
+  }, [addItem]);
+
+  return <Header />;
+}
+
+function renderHeaderWithSessionLostAt(path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <CartProvider>
+        <ProductTitleProvider>
+          <Routes>
+            <Route path="*" element={<TriggerSessionLostThenHeader />} />
+          </Routes>
+        </ProductTitleProvider>
+      </CartProvider>
+    </MemoryRouter>,
+  );
+}
+
 describe('Header', () => {
   beforeEach(() => {
     localStorage.clear();
+    mockedAddToCart.mockReset();
   });
 
   afterEach(() => {
@@ -103,5 +137,22 @@ describe('Header', () => {
     expect(screen.getByText('Inicio')).toBeInTheDocument();
     expect(screen.getByText('Acer Liquid E700')).toBeInTheDocument();
     expect(screen.queryByTestId('breadcrumb-ellipsis')).not.toBeInTheDocument();
+  });
+
+  it('no muestra ningún aviso de sesión perdida por defecto', () => {
+    renderHeaderAt('/');
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('muestra el aviso de sesión perdida cuando CartContext lo expone', async () => {
+    localStorage.setItem('cartCount', '5');
+    mockedAddToCart.mockResolvedValue(1);
+
+    renderHeaderWithSessionLostAt('/');
+
+    expect(
+      await screen.findByText('Se perdió el carrito anterior, se inició uno nuevo.'),
+    ).toBeInTheDocument();
   });
 });
