@@ -27,6 +27,10 @@ Backend real: `https://itx-frontend-test.onrender.com` (API REST ya provista, no
 
 No es SPA con SSR ni MPA: una sola aplicación cliente servida estática tras build.
 
+### Nota sobre el enunciado: "se permite JS con ES6"
+
+El enunciado permite JavaScript (ES6+) como alternativa a TypeScript; no es una directriz de build ni de compatibilidad de navegadores. Se opta por **TypeScript con tipado estricto** (ver tabla de stack) porque documenta el contrato real del API — typos y campos polimórficos incluidos, ver §4.3 — de forma verificable en compile-time.
+
 ## 3. Modelo de carrito y sesión
 
 - **Modelo**: solo contador numérico. El carrito nunca almacena la lista de artículos en cliente.
