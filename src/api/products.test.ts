@@ -1,11 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProductDetailRaw, ProductListItemRaw } from '../types/api'
 
-vi.mock('./client', () => ({
-  request: vi.fn(),
-}))
+vi.mock('./client', () => {
+  class ApiError extends Error {
+    status: number
+    constructor(status: number, message: string) {
+      super(message)
+      this.name = 'ApiError'
+      this.status = status
+    }
+  }
+  return { request: vi.fn(), ApiError }
+})
 
-import { request } from './client'
+import { ApiError, request } from './client'
 import {
   getProductDetail,
   getProducts,
@@ -283,5 +291,43 @@ describe('getProductDetail', () => {
     expect(requestMock).toHaveBeenCalledTimes(2)
     expect(detail1Again).toEqual(detail1)
     expect(detail2Again).toEqual(detail2)
+  })
+
+  describe('500 sin distinguir id inexistente (cross-check contra el listado, CLAUDE.md §4.1b)', () => {
+    const listRaw: ProductListItemRaw[] = [
+      { id: '1', brand: 'Acer', model: 'A1', price: '100', imgUrl: 'a.png' },
+    ]
+
+    it('id ausente del listado: sintetiza un ApiError 404 en vez del 500 original', async () => {
+      requestMock
+        .mockRejectedValueOnce(new ApiError(500, 'An Unexpected Error Occurred'))
+        .mockResolvedValueOnce(listRaw)
+
+      await expect(getProductDetail('does-not-exist')).rejects.toMatchObject({ status: 404 })
+    })
+
+    it('id presente en el listado: no se puede confirmar ausencia, se repropaga el error original', async () => {
+      const error = new ApiError(500, 'An Unexpected Error Occurred')
+      requestMock.mockRejectedValueOnce(error).mockResolvedValueOnce(listRaw)
+
+      await expect(getProductDetail('1')).rejects.toBe(error)
+    })
+
+    it('el listado también falla: no se puede confirmar, se repropaga el error original', async () => {
+      const error = new ApiError(500, 'An Unexpected Error Occurred')
+      requestMock.mockRejectedValueOnce(error).mockRejectedValueOnce(new Error('network down'))
+
+      await expect(getProductDetail('does-not-exist')).rejects.toBe(error)
+    })
+
+    it('no cachea el 404 sintetizado', async () => {
+      requestMock
+        .mockRejectedValueOnce(new ApiError(500, 'An Unexpected Error Occurred'))
+        .mockResolvedValueOnce(listRaw)
+
+      await expect(getProductDetail('does-not-exist')).rejects.toMatchObject({ status: 404 })
+
+      expect(localStorage.getItem('product_detail_does-not-exist')).toBeNull()
+    })
   })
 })

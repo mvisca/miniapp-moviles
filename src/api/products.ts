@@ -3,7 +3,7 @@
 // aíslan las inconsistencias reales del API (precio vacío, campos
 // polimórficos, swap displaySize/displayResolution) del resto de la app.
 
-import { request } from './client'
+import { request, ApiError } from './client'
 import type { ProductDetailRaw, ProductListItemRaw } from '../types/api'
 import type { Product, ProductDetail } from '../types/domain'
 import { parsePrice } from '../utils/parsePrice'
@@ -65,11 +65,36 @@ export async function getProductDetail(id: string): Promise<ProductDetail> {
     return cached
   }
 
-  // No se captura el ApiError: debe propagar sin capturar para que quien
-  // consuma esta función (la PDP, SPEC-006) pueda distinguir un 404 de
-  // otros fallos. Al no capturarlo, tampoco se cachea una respuesta fallida.
-  const raw = await request<ProductDetailRaw>(`/api/product/${id}`)
-  const mapped = mapProductDetail(raw)
-  setCached(cacheKey, mapped)
-  return mapped
+  try {
+    const raw = await request<ProductDetailRaw>(`/api/product/${id}`)
+    const mapped = mapProductDetail(raw)
+    setCached(cacheKey, mapped)
+    return mapped
+  } catch (error) {
+    // El API devuelve 500 genérico también para ids inexistentes, sin
+    // distinguirlo de un fallo real de servidor (ver CLAUDE.md §4.1b). Si ya
+    // es un 404 no hay nada que resolver: se propaga tal cual. Para
+    // cualquier otro error, se intenta confirmar contra el listado
+    // (cacheado o recién pedido) si el id existe; si no existe, se sintetiza
+    // el mismo ApiError(404, ...) que ya maneja la PDP. Si no se puede
+    // confirmar (el listado también falla) se propaga el error original y
+    // sigue el backoff normal — no se cachea una respuesta fallida en
+    // ningún caso.
+    if (error instanceof ApiError && error.status === 404) {
+      throw error
+    }
+    if (await isConfirmedMissing(id)) {
+      throw new ApiError(404, `Product ${id} not found (verified against product list)`)
+    }
+    throw error
+  }
+}
+
+async function isConfirmedMissing(id: string): Promise<boolean> {
+  try {
+    const products = await getProducts()
+    return !products.some((product) => product.id === id)
+  } catch {
+    return false
+  }
 }
