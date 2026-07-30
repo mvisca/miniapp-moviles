@@ -90,8 +90,8 @@ function ProductDetailPage() {
         <ProductActions
           product={product}
           onAddToCart={({ colorCode, storageCode }) => {
-            if (colorCode === undefined || storageCode === undefined) return;
-            void addItem(product.id, colorCode, storageCode);
+            if (colorCode === undefined || storageCode === undefined) return Promise.resolve();
+            return addItem(product.id, colorCode, storageCode);
           }}
         />
       </div>

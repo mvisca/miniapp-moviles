@@ -66,3 +66,14 @@
   color: var(--text);
   cursor: not-allowed;
 }
+
+.addButtonSuccess {
+  background: var(--accent);
+  color: #fff;
+}
+
+.addButtonError {
+  background: var(--surface);
+  color: #b3261e;
+  border: 1px solid #b3261e;
+}

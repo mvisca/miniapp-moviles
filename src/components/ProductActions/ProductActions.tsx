@@ -1,17 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ProductDetail } from '../../types/domain';
 import styles from './ProductActions.module.css';
+
+type Feedback = 'idle' | 'pending' | 'success' | 'error';
 
 interface ProductActionsProps {
   product: ProductDetail;
   /**
    * Hook opcional para SPEC-007 (mutación real contra `addToCart` de
-   * `api/cart.ts`). En este task el click es un STUB: si no se provee,
-   * no hace nada. No se importa ni se llama `addToCart` aquí (fuera de
-   * alcance de SPEC-006, ver plan_content de TASK-006-3).
+   * `api/cart.ts`). Si no se provee, el click no hace nada (comportamiento
+   * actual). Devuelve una promesa (SPEC-011): resolverla/rechazarla
+   * conduce el feedback visual del botón (idle -> pending -> success|error
+   * -> idle tras ~2s).
    */
-  onAddToCart?: (selection: { colorCode?: number; storageCode?: number }) => void;
+  onAddToCart?: (selection: {
+    colorCode?: number;
+    storageCode?: number;
+  }) => Promise<void>;
 }
+
+const FEEDBACK_LABEL: Record<Feedback, string> = {
+  idle: 'Añadir al carrito',
+  pending: 'Añadiendo…',
+  success: '✓ Añadido al carrito',
+  error: 'No se pudo añadir, probá de nuevo',
+};
 
 /**
  * Presentacional (SPEC-006, CLAUDE.md §6/§4.1): selectores de storage y
@@ -19,6 +32,11 @@ interface ProductActionsProps {
  * — nunca un valor hardcodeado ni fuera de esa lista, para que el frontend
  * nunca pueda enviar un código inválido a `POST /api/cart`. Botón "Añadir
  * al carrito" deshabilitado cuando `product.price` es `null`.
+ *
+ * Feedback de éxito/error (SPEC-011, TASK-011-2): estado local
+ * `idle -> pending -> success | error -> idle` (revierte automáticamente
+ * tras ~2s). El timeout de reversión se guarda en un `useRef` y se limpia
+ * al desmontar, para evitar `setState` sobre un componente ya desmontado.
  */
 function ProductActions({ product, onAddToCart }: ProductActionsProps) {
   const [storageCode, setStorageCode] = useState<number | undefined>(
@@ -27,11 +45,40 @@ function ProductActions({ product, onAddToCart }: ProductActionsProps) {
   const [colorCode, setColorCode] = useState<number | undefined>(
     product.colors[0]?.code,
   );
+  const [feedback, setFeedback] = useState<Feedback>('idle');
+  const revertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (revertTimeoutRef.current !== null) {
+        clearTimeout(revertTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const isAvailable = product.price !== null;
 
-  function handleAddToCart() {
-    onAddToCart?.({ colorCode, storageCode });
+  function scheduleRevertToIdle() {
+    if (revertTimeoutRef.current !== null) {
+      clearTimeout(revertTimeoutRef.current);
+    }
+    revertTimeoutRef.current = setTimeout(() => {
+      setFeedback('idle');
+      revertTimeoutRef.current = null;
+    }, 2000);
+  }
+
+  async function handleAddToCart() {
+    if (!onAddToCart) return;
+
+    setFeedback('pending');
+    try {
+      await onAddToCart({ colorCode, storageCode });
+      setFeedback('success');
+    } catch {
+      setFeedback('error');
+    }
+    scheduleRevertToIdle();
   }
 
   return (
@@ -68,11 +115,13 @@ function ProductActions({ product, onAddToCart }: ProductActionsProps) {
 
       <button
         type="button"
-        className={styles.addButton}
-        disabled={!isAvailable}
+        className={`${styles.addButton} ${feedback === 'success' ? styles.addButtonSuccess : ''} ${
+          feedback === 'error' ? styles.addButtonError : ''
+        }`}
+        disabled={!isAvailable || feedback === 'pending'}
         onClick={handleAddToCart}
       >
-        Añadir al carrito
+        {isAvailable ? FEEDBACK_LABEL[feedback] : 'Añadir al carrito'}
       </button>
     </div>
   );

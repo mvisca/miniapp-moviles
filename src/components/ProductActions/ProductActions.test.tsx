@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProductDetail } from '../../types/domain';
 import ProductActions from './ProductActions';
 
@@ -103,5 +103,96 @@ describe('ProductActions', () => {
     const colorSelect = screen.getByLabelText(/color/i) as HTMLSelectElement;
     expect(storageSelect.querySelectorAll('option')).toHaveLength(0);
     expect(colorSelect.querySelectorAll('option')).toHaveLength(0);
+  });
+
+  // TDD (TASK-011-2, ver SPEC-011 "Tests required" sección ProductActions):
+  // feedback local idle -> pending -> success|error -> idle tras ~2s.
+  // onAddToCart pasa a `(selection) => Promise<void>`.
+  describe('feedback de éxito/error al añadir al carrito', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('click con onAddToCart que resuelve: pending -> success -> vuelve a idle tras ~2s', async () => {
+      let resolveAdd: () => void = () => {};
+      const onAddToCart = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveAdd = resolve;
+          }),
+      );
+
+      render(<ProductActions product={baseProduct} onAddToCart={onAddToCart} />);
+      const button = screen.getByRole('button', { name: /añadir al carrito/i });
+
+      await act(async () => {
+        fireEvent.click(button);
+        await Promise.resolve();
+      });
+
+      expect(
+        screen.getByRole('button', { name: /añadiendo/i }),
+      ).toBeDisabled();
+
+      await act(async () => {
+        resolveAdd();
+        await Promise.resolve();
+      });
+
+      expect(
+        screen.getByRole('button', { name: /añadido al carrito/i }),
+      ).toBeInTheDocument();
+
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      expect(
+        screen.getByRole('button', { name: /^añadir al carrito$/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('click con onAddToCart que rechaza: pending -> error -> vuelve a idle tras ~2s', async () => {
+      let rejectAdd: () => void = () => {};
+      const onAddToCart = vi.fn(
+        () =>
+          new Promise<void>((_resolve, reject) => {
+            rejectAdd = reject;
+          }),
+      );
+
+      render(<ProductActions product={baseProduct} onAddToCart={onAddToCart} />);
+      const button = screen.getByRole('button', { name: /añadir al carrito/i });
+
+      await act(async () => {
+        fireEvent.click(button);
+        await Promise.resolve();
+      });
+
+      expect(
+        screen.getByRole('button', { name: /añadiendo/i }),
+      ).toBeDisabled();
+
+      await act(async () => {
+        rejectAdd();
+        await Promise.resolve().catch(() => {});
+      });
+
+      expect(
+        screen.getByRole('button', { name: /no se pudo añadir/i }),
+      ).toBeInTheDocument();
+
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      expect(
+        screen.getByRole('button', { name: /^añadir al carrito$/i }),
+      ).toBeInTheDocument();
+    });
   });
 });
