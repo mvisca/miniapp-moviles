@@ -8,6 +8,9 @@ import type { ProductDetailRaw, ProductListItemRaw } from '../types/api'
 import type { Product, ProductDetail } from '../types/domain'
 import { parsePrice } from '../utils/parsePrice'
 import { toList } from '../utils/toList'
+import { getCached, setCached } from '../utils/cache'
+
+const PRODUCTS_CACHE_KEY = 'products'
 
 export function mapProductListItem(raw: ProductListItemRaw): Product {
   return {
@@ -44,8 +47,15 @@ export function mapProductDetail(raw: ProductDetailRaw): ProductDetail {
 }
 
 export async function getProducts(): Promise<Product[]> {
+  const cached = getCached<Product[]>(PRODUCTS_CACHE_KEY)
+  if (cached !== null) {
+    return cached
+  }
+
   const raw = await request<ProductListItemRaw[]>('/api/product')
-  return raw.map(mapProductListItem)
+  const mapped = raw.map(mapProductListItem)
+  setCached(PRODUCTS_CACHE_KEY, mapped)
+  return mapped
 }
 
 export async function getProductDetail(id: string): Promise<ProductDetail> {

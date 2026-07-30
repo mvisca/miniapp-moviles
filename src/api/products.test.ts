@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProductDetailRaw, ProductListItemRaw } from '../types/api'
 
 vi.mock('./client', () => ({
@@ -12,11 +12,19 @@ import {
   mapProductDetail,
   mapProductListItem,
 } from './products'
+import { setCached } from '../utils/cache'
+import type { Product } from '../types/domain'
 
 const requestMock = vi.mocked(request)
 
+beforeEach(() => {
+  localStorage.clear()
+})
+
 afterEach(() => {
   vi.resetAllMocks()
+  localStorage.clear()
+  vi.useRealTimers()
 })
 
 describe('mapProductListItem', () => {
@@ -117,20 +125,56 @@ describe('mapProductDetail', () => {
 })
 
 describe('getProducts', () => {
-  it('fetches GET /api/product and maps each item', async () => {
-    const raw: ProductListItemRaw[] = [
-      { id: '1', brand: 'Acer', model: 'A1', price: '100', imgUrl: 'a.png' },
-      { id: '2', brand: 'Acer', model: 'A2', price: '', imgUrl: 'b.png' },
-    ]
+  const raw: ProductListItemRaw[] = [
+    { id: '1', brand: 'Acer', model: 'A1', price: '100', imgUrl: 'a.png' },
+    { id: '2', brand: 'Acer', model: 'A2', price: '', imgUrl: 'b.png' },
+  ]
+  const mapped: Product[] = [
+    { id: '1', brand: 'Acer', model: 'A1', price: 100, imgUrl: 'a.png' },
+    { id: '2', brand: 'Acer', model: 'A2', price: null, imgUrl: 'b.png' },
+  ]
+
+  it('fetches GET /api/product and maps each item on a cache miss', async () => {
     requestMock.mockResolvedValueOnce(raw)
 
     const result = await getProducts()
 
     expect(requestMock).toHaveBeenCalledWith('/api/product')
-    expect(result).toEqual([
-      { id: '1', brand: 'Acer', model: 'A1', price: 100, imgUrl: 'a.png' },
-      { id: '2', brand: 'Acer', model: 'A2', price: null, imgUrl: 'b.png' },
-    ])
+    expect(result).toEqual(mapped)
+  })
+
+  it('cache miss: caches the mapped result, so a second call does not refetch', async () => {
+    requestMock.mockResolvedValueOnce(raw)
+
+    const first = await getProducts()
+    const second = await getProducts()
+
+    expect(first).toEqual(mapped)
+    expect(second).toEqual(mapped)
+    expect(requestMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('cache hit: returns the cached data without calling request', async () => {
+    setCached('products', mapped)
+
+    const result = await getProducts()
+
+    expect(result).toEqual(mapped)
+    expect(requestMock).not.toHaveBeenCalled()
+  })
+
+  it('expired cache: refetches instead of returning the stale entry', async () => {
+    vi.useFakeTimers()
+    setCached('products', mapped)
+
+    vi.advanceTimersByTime(3600_000 + 1)
+
+    requestMock.mockResolvedValueOnce(raw)
+
+    const result = await getProducts()
+
+    expect(result).toEqual(mapped)
+    expect(requestMock).toHaveBeenCalledTimes(1)
   })
 })
 
