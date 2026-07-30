@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import logo from '../../assets/logo.svg';
 import { useCart } from '../../context/CartContext';
@@ -31,32 +31,54 @@ function LoadingEllipsis() {
  * CartContext.
  */
 function Header() {
-  const { count, sessionLostNotice } = useCart();
+  const { count } = useCart();
   const { title } = useProductTitle();
   const location = useLocation();
   const isProductDetail = location.pathname.startsWith('/product/');
 
+  const isFirstRender = useRef(true);
+  const [isBouncing, setIsBouncing] = useState(false);
+
+  // Bounce de tamaño del indicador de carrito cada vez que `count` cambia
+  // (SPEC-011/CLAUDE.md §6) — no en el montaje inicial (restaurar
+  // `cartCount` de localStorage no debe animar). `onAnimationEnd` saca la
+  // clase para poder re-disparar la animación en el próximo cambio.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setIsBouncing(true);
+  }, [count]);
+
   return (
     <header className={styles.header}>
-      <div className={styles.row}>
-        <Link to="/" className={styles.brand}>
-          <img src={logo} alt="" className={styles.logo} />
-          <span>Miniapp Móviles</span>
-        </Link>
+      <div className={styles.container}>
+        <div className={styles.row}>
+          <Link to="/" className={styles.brand}>
+            <img src={logo} alt="" className={styles.logo} />
+            <span>Miniapp Móviles</span>
+          </Link>
 
-        <span className={styles.cart}>{count}</span>
-        {sessionLostNotice && <span role="status">{sessionLostNotice}</span>}
+          <span
+            className={`${styles.cart} ${isBouncing ? styles.cartBounce : ''}`}
+            onAnimationEnd={() => setIsBouncing(false)}
+          >
+            <span aria-hidden="true">🛒</span>
+            <span>{count}</span>
+          </span>
+        </div>
+
+        <nav className={styles.breadcrumbs} aria-label="breadcrumb">
+          <Link to="/">Inicio</Link>
+          {isProductDetail && (
+            <>
+              {' / '}
+              {title ? <span>{title}</span> : <LoadingEllipsis />}
+            </>
+          )}
+        </nav>
       </div>
-
-      <nav className={styles.breadcrumbs} aria-label="breadcrumb">
-        <span>Inicio</span>
-        {isProductDetail && (
-          <>
-            {' / '}
-            {title ? <span>{title}</span> : <LoadingEllipsis />}
-          </>
-        )}
-      </nav>
     </header>
   );
 }
