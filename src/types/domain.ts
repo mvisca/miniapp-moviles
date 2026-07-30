@@ -15,6 +15,7 @@ export interface ProductDetail {
   brand: string;
   model: string;
   price: number | null;
+  imgUrl: string;
   cpu: string;
   ram: string;
   os: string;

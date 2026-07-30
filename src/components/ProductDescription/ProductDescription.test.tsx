@@ -18,6 +18,7 @@ const baseProduct: ProductDetail = {
   brand: 'Acer',
   model: 'Liquid E700',
   price: 299,
+  imgUrl: 'https://example.com/abc123.png',
   cpu: 'ST Ericsson PNX6715, 416 MHz',
   ram: '2 GB RAM or 4 GB, 1 GB RAM',
   os: 'Android 4.4.4 (KitKat), upgradable to 5.1 (Lollipop)',

@@ -17,6 +17,7 @@ export interface ProductDetailRaw {
   brand: string;
   model: string;
   price: string;
+  imgUrl: string;
   cpu: string | string[];
   ram: string | string[];
   os: string | string[];
