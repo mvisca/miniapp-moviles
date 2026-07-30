@@ -296,6 +296,10 @@ A partir de la visión general de SPEC-001 (reflejado en este documento), el tra
 
 El desglose en tareas (cantidad y contenido) se define por spec en el momento de aprobarla, siguiendo el orden de dependencias de esta tabla.
 
+### Worktrees de despacho
+
+El skill `feinai-dispatch` crea un git worktree por tarea en `.worktrees/TASK-<id>-<slug>/`, sobre una rama `feature/TASK-<id>-<slug>`. Es el único directorio de worktrees que usa este proyecto — está en `.gitignore`, es transitorio (se crea al despachar un agente y se elimina con `git worktree remove` tras el merge) y nunca debe commitearse ni documentarse como parte del árbol final del repo.
+
 > **Nota para el agente de desarrollo**: las imágenes de esta sección son evidencia visual para quien lea el documento (evaluador humano), no contexto de trabajo. No hace falta abrirlas ni interpretarlas para continuar con la implementación.
 
 ![Backlog de specs en la web de feinai, sin tareas activas](docs/images/feinai-web-specs-ready.png)

@@ -3,6 +3,7 @@ dist/
 .env
 .env.local
 .feinai/
+.worktrees/
 docs/enunciado.pdf
 .DS_Store
 *.log

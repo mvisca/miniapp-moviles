@@ -1,1 +1,3 @@
+# Pin exacto de versiones para pnpm (pnpm 11+ dejó de leer save-exact de
+# .npmrc). Ver .npmrc para el equivalente que usa npm.
 saveExact: true
