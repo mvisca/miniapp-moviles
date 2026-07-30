@@ -40,4 +40,4 @@ El contexto del proyecto ([`CLAUDE.md`](./CLAUDE.md)) reúne todas las decisione
 
 ## Estado del proyecto
 
-En desarrollo — historial de commits evolutivo por hitos.
+Completo — historial de commits evolutivo por hitos.
