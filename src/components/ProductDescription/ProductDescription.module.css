@@ -68,6 +68,7 @@
 
 .specs li > span:last-child {
   font-family: var(--sans);
+  font-size: 0.875rem;
   color: var(--text-h);
   text-align: right;
 }

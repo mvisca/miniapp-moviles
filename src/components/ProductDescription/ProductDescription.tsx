@@ -1,4 +1,5 @@
 import type { ProductDetail } from '../../types/domain';
+import { formatSpecValue } from '../../utils/formatSpecValue';
 import styles from './ProductDescription.module.css';
 
 interface ProductDescriptionProps {
@@ -32,38 +33,40 @@ function ProductDescription({ product }: ProductDescriptionProps) {
       )}
       <ul className={styles.specs}>
         <li>
-          <span className={styles.label}>CPU:</span> <span>{product.cpu}</span>
+          <span className={styles.label}>CPU:</span>{' '}
+          <span>{formatSpecValue(product.cpu)}</span>
         </li>
         <li>
-          <span className={styles.label}>RAM:</span> <span>{product.ram}</span>
+          <span className={styles.label}>RAM:</span>{' '}
+          <span>{formatSpecValue(product.ram)}</span>
         </li>
         <li>
           <span className={styles.label}>Sistema operativo:</span>{' '}
-          <span>{product.os}</span>
+          <span>{formatSpecValue(product.os)}</span>
         </li>
         <li>
           <span className={styles.label}>Resolución de pantalla:</span>{' '}
-          <span>{product.screenResolution}</span>
+          <span>{formatSpecValue(product.screenResolution)}</span>
         </li>
         <li>
           <span className={styles.label}>Batería:</span>{' '}
-          <span>{product.battery}</span>
+          <span>{formatSpecValue(product.battery)}</span>
         </li>
         <li>
           <span className={styles.label}>Cámara trasera:</span>{' '}
-          <span>{product.rearCamera}</span>
+          <span>{formatSpecValue(product.rearCamera)}</span>
         </li>
         <li>
           <span className={styles.label}>Cámara frontal:</span>{' '}
-          <span>{product.frontCamera}</span>
+          <span>{formatSpecValue(product.frontCamera)}</span>
         </li>
         <li>
           <span className={styles.label}>Dimensiones:</span>{' '}
-          <span>{product.dimensions}</span>
+          <span>{formatSpecValue(product.dimensions)}</span>
         </li>
         <li>
           <span className={styles.label}>Peso:</span>{' '}
-          <span>{product.weight}</span>
+          <span>{formatSpecValue(product.weight)}</span>
         </li>
       </ul>
     </div>

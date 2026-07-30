@@ -81,4 +81,10 @@ describe('ProductDescription', () => {
     expect(front).toBeInTheDocument();
     expect(rear).not.toBe(front);
   });
+
+  it('unifica un spec vacío a "-"', () => {
+    render(<ProductDescription product={{ ...baseProduct, battery: '' }} />);
+
+    expect(screen.getByText('-')).toBeInTheDocument();
+  });
 });
