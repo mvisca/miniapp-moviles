@@ -1,4 +1,4 @@
-# Miniapp Móviles — Prueba Frontend Hiberus/ITX
+# Miniapp Móviles
 
 SPA en React + TypeScript para explorar un catálogo de teléfonos móviles: listado con búsqueda, ficha de detalle con selección de color y almacenamiento, y carrito (contador simple sin detalle de productos).
 

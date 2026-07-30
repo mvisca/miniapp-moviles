@@ -1,4 +1,4 @@
-# Contexto del proyecto — Miniapp Móviles (Prueba Frontend Hiberus/ITX)
+# Contexto del proyecto — Miniapp Móviles
 
 Este documento es la fuente única de verdad del proyecto: decisiones de arquitectura, contrato real del API (verificado contra el backend), convenciones y justificaciones. El enunciado original de la prueba no forma parte de este repositorio por confidencialidad del proceso.
 
