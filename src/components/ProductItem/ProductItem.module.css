@@ -1,16 +1,18 @@
 .card {
   display: flex;
   flex-direction: column;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: 1rem;
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
 }
 
 .card[aria-disabled='true'] {
@@ -22,6 +24,9 @@
   height: auto;
   aspect-ratio: 1 / 1;
   object-fit: contain;
+  background: var(--surface);
+  padding: 0.75rem;
+  box-sizing: border-box;
   margin-bottom: 0.75rem;
 }
 
@@ -32,22 +37,31 @@
 }
 
 .brand {
+  font-family: var(--mono);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--text);
   font-weight: 600;
   margin: 0;
 }
 
 .model {
-  color: #555;
+  font-family: var(--heading);
+  font-weight: 600;
+  color: var(--text-h);
   margin: 0;
 }
 
 .price {
+  font-family: var(--mono);
   font-weight: 600;
+  color: var(--text-h);
   margin: 0.25rem 0 0;
 }
 
 .unavailable {
   font-style: italic;
-  color: #999;
+  color: var(--text);
   margin: 0.25rem 0 0;
 }
