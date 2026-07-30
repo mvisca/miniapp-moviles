@@ -25,6 +25,7 @@ export function mapProductDetail(raw: ProductDetailRaw): ProductDetail {
     brand: raw.brand,
     model: raw.model,
     price: parsePrice(raw.price),
+    imgUrl: raw.imgUrl,
     cpu: toList(raw.cpu).join(', '),
     ram: toList(raw.ram).join(', '),
     os: toList(raw.os).join(', '),
