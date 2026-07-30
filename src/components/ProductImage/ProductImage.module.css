@@ -1,6 +1,14 @@
 .image {
+  box-sizing: border-box;
   width: 100%;
+  max-width: min(100%, 380px);
+  margin-inline: auto;
   height: auto;
   aspect-ratio: 1 / 1;
   object-fit: contain;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: block;
 }
