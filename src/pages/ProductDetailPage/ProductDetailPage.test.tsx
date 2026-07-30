@@ -1,7 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../../api/client';
+import { CartProvider } from '../../context/CartContext';
 import { ProductTitleProvider } from '../../context/ProductTitleContext';
 import type { ProductDetail } from '../../types/domain';
 import ProductDetailPage from './ProductDetailPage';
@@ -14,11 +16,18 @@ import ProductDetailPage from './ProductDetailPage';
 //   a la PLP.
 // - loading -> mensaje simple mientras el fetch está en curso.
 // - error genérico -> mensaje de error.
+//
+// TASK-007-2 agrega: click en "Añadir al carrito" invoca `addToCart`
+// (mockeado) con el id del producto y los códigos de color/almacenamiento
+// inicialmente seleccionados (los primeros de `options`).
 
 vi.mock('../../api/products');
+vi.mock('../../api/cart');
 import { getProductDetail } from '../../api/products';
+import { addToCart } from '../../api/cart';
 
 const getProductDetailMock = vi.mocked(getProductDetail);
+const addToCartMock = vi.mocked(addToCart);
 
 const product: ProductDetail = {
   id: '1',
@@ -41,18 +50,21 @@ const product: ProductDetail = {
 
 afterEach(() => {
   vi.resetAllMocks();
+  localStorage.clear();
 });
 
 function renderPage(id = '1') {
   return render(
-    <ProductTitleProvider>
-      <MemoryRouter initialEntries={[`/product/${id}`]}>
-        <Routes>
-          <Route path="/product/:id" element={<ProductDetailPage />} />
-          <Route path="/" element={<p>PLP</p>} />
-        </Routes>
-      </MemoryRouter>
-    </ProductTitleProvider>,
+    <CartProvider>
+      <ProductTitleProvider>
+        <MemoryRouter initialEntries={[`/product/${id}`]}>
+          <Routes>
+            <Route path="/product/:id" element={<ProductDetailPage />} />
+            <Route path="/" element={<p>PLP</p>} />
+          </Routes>
+        </MemoryRouter>
+      </ProductTitleProvider>
+    </CartProvider>,
   );
 }
 
@@ -98,5 +110,25 @@ describe('ProductDetailPage', () => {
     renderPage();
 
     expect(await screen.findByText('No se pudo cargar el producto.')).toBeInTheDocument();
+  });
+
+  it('click en "Añadir al carrito" llama a addToCart con el id y los códigos seleccionados', async () => {
+    const user = userEvent.setup();
+    getProductDetailMock.mockResolvedValueOnce(product);
+    addToCartMock.mockResolvedValueOnce(1);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('Acer')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /añadir al carrito/i }));
+
+    expect(addToCartMock).toHaveBeenCalledWith(
+      product.id,
+      product.colors[0].code,
+      product.storages[0].code,
+    );
   });
 });

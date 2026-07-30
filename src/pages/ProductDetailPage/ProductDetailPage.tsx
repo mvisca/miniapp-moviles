@@ -5,6 +5,7 @@ import { ApiError } from '../../api/client';
 import ProductImage from '../../components/ProductImage/ProductImage';
 import ProductDescription from '../../components/ProductDescription/ProductDescription';
 import ProductActions from '../../components/ProductActions/ProductActions';
+import { useCart } from '../../context/CartContext';
 import { useProductTitle } from '../../context/ProductTitleContext';
 import type { ProductDetail } from '../../types/domain';
 import styles from './ProductDetailPage.module.css';
@@ -25,6 +26,7 @@ type Status = 'loading' | 'notFound' | 'error' | 'success';
 function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { setTitle } = useProductTitle();
+  const { addItem } = useCart();
   const [status, setStatus] = useState<Status>('loading');
   const [product, setProduct] = useState<ProductDetail | null>(null);
 
@@ -84,7 +86,13 @@ function ProductDetailPage() {
     <div className={styles.page}>
       <ProductImage imgUrl={product.imgUrl} brand={product.brand} model={product.model} />
       <ProductDescription product={product} />
-      <ProductActions product={product} />
+      <ProductActions
+        product={product}
+        onAddToCart={({ colorCode, storageCode }) => {
+          if (colorCode === undefined || storageCode === undefined) return;
+          void addItem(product.id, colorCode, storageCode);
+        }}
+      />
     </div>
   );
 }
