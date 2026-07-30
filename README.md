@@ -24,7 +24,7 @@ SPA en React + TypeScript para explorar un catálogo de teléfonos móviles: lis
 ```bash
 pnpm install       # o: npm install
 
-pnpm dev           # servidor de desarrollo
+pnpm start         # servidor de desarrollo
 pnpm build         # type-check + build de producción
 pnpm preview       # sirve el build localmente
 pnpm test          # suite de tests (una pasada)
