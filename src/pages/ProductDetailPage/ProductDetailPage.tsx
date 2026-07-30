@@ -85,14 +85,16 @@ function ProductDetailPage() {
   return (
     <div className={styles.page}>
       <ProductImage imgUrl={product.imgUrl} brand={product.brand} model={product.model} />
-      <ProductDescription product={product} />
-      <ProductActions
-        product={product}
-        onAddToCart={({ colorCode, storageCode }) => {
-          if (colorCode === undefined || storageCode === undefined) return;
-          void addItem(product.id, colorCode, storageCode);
-        }}
-      />
+      <div className={styles.info}>
+        <ProductDescription product={product} />
+        <ProductActions
+          product={product}
+          onAddToCart={({ colorCode, storageCode }) => {
+            if (colorCode === undefined || storageCode === undefined) return;
+            void addItem(product.id, colorCode, storageCode);
+          }}
+        />
+      </div>
     </div>
   );
 }
