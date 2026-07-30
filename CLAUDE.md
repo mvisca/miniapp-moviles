@@ -298,6 +298,14 @@ El desglose en tareas (cantidad y contenido) se define por spec en el momento de
 
 > **Nota para el agente de desarrollo**: las imágenes de esta sección son evidencia visual para quien lea el documento (evaluador humano), no contexto de trabajo. No hace falta abrirlas ni interpretarlas para continuar con la implementación.
 
-![Listado de specs en la CLI de feinai](docs/images/feinai-cli-specs.png)
+![Backlog de specs en la web de feinai, sin tareas activas](docs/images/feinai-web-specs-ready.png)
 
-![Listado de specs y tareas en la web de feinai](docs/images/feinai-web-specs-tasks.png)
+*Backlog de specs listas (`Ready`) tras escribir sus tareas, antes de despachar ningún agente — sin tareas `In Progress`.*
+
+![Un agente trabajando una tarea de SPEC-002 en su propio worktree](docs/images/feinai-web-agent-single-task.png)
+
+*Despacho secuencial: un único agente (`bash`, worktree `.worktrees/TASK-002-0-scaffold`) ejecutando TASK-002-0, con las tareas dependientes (`TASK-002-1`) aún bloqueadas.*
+
+![Dos agentes ejecutando en simultáneo tareas de SPEC-002](docs/images/feinai-web-agents-parallel.png)
+
+*Despacho en paralelo: TASK-002-1 y TASK-002-2, sin dependencias entre sí, corriendo a la vez en worktrees separados — ambas ya fusionadas (`merged`) a `main`.*
