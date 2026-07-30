@@ -1,0 +1,35 @@
+/*
+ * Único contenedor con scroll de la app: el Header queda fuera (sibling
+ * flex, altura fija) y este `<main>` ocupa el resto del alto disponible
+ * (flex:1) con su propio scroll interno. `scrollbar-gutter: stable`
+ * reserva el espacio de la scrollbar exista o no, para que su aparición
+ * (con muchos productos) no cambie el ancho del contenido.
+ */
+.main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.main::-webkit-scrollbar {
+  width: 10px;
+}
+
+.main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.main::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.main::-webkit-scrollbar-thumb:hover {
+  background: var(--text);
+  background-clip: padding-box;
+}
