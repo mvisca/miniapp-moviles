@@ -6,7 +6,7 @@ SPA en React + TypeScript para explorar un catálogo de teléfonos móviles: lis
 
 | | |
 |---|---|
-| Framework | React 18 + TypeScript (estricto) |
+| Framework | React 19 + TypeScript (estricto) |
 | Bundler | Vite 5 |
 | Routing | React Router DOM v6 |
 | Testing | Vitest + React Testing Library |

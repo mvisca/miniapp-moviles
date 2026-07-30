@@ -12,7 +12,7 @@ Backend real: `https://itx-frontend-test.onrender.com` (API REST ya provista, no
 
 | Decisión | Elección |
 |---|---|
-| Framework | React 18 |
+| Framework | React 19 |
 | Lenguaje | TypeScript estricto |
 | Bundler | Vite 5 |
 | Routing | React Router DOM v6 (Browser Router, sin `#`) |
