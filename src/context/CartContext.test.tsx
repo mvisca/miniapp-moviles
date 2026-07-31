@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { addToCart } from '../api/cart';
+import { getCartCount, setCartCount } from '../utils/cache';
 import { CartProvider, useCart } from './CartContext';
 
 vi.mock('../api/cart');
@@ -29,7 +30,7 @@ describe('CartContext', () => {
   });
 
   it('expone el count inicial leído de localStorage', () => {
-    localStorage.setItem('cartCount', '3');
+    setCartCount(3);
 
     const { result } = renderHook(() => useCart(), {
       wrapper: CartProvider,
@@ -38,7 +39,7 @@ describe('CartContext', () => {
     expect(result.current.count).toBe(3);
   });
 
-  it('expone count 0 si el valor de localStorage no es un número válido', () => {
+  it('expone count 0 si el valor de localStorage no es un envelope JSON válido', () => {
     localStorage.setItem('cartCount', 'not-a-number');
 
     const { result } = renderHook(() => useCart(), {
@@ -90,11 +91,11 @@ describe('CartContext', () => {
       await result.current.addItem('some-id', 1, 2);
     });
 
-    expect(localStorage.getItem('cartCount')).toBe('7');
+    expect(getCartCount()).toBe(7);
   });
 
   it('addItem no dispara aviso de sesión perdida cuando el count aumenta', async () => {
-    localStorage.setItem('cartCount', '2');
+    setCartCount(2);
     mockedAddToCart.mockResolvedValue(3);
 
     const { result } = renderHook(() => useCart(), {
@@ -109,7 +110,7 @@ describe('CartContext', () => {
   });
 
   it('addItem dispara aviso de sesión perdida cuando el count no aumenta (isValidIncrement da false)', async () => {
-    localStorage.setItem('cartCount', '5');
+    setCartCount(5);
     mockedAddToCart.mockResolvedValue(1);
 
     const { result } = renderHook(() => useCart(), {
@@ -125,11 +126,11 @@ describe('CartContext', () => {
     );
     // Aun con la sesión perdida, el nuevo count se persiste siempre.
     expect(result.current.count).toBe(1);
-    expect(localStorage.getItem('cartCount')).toBe('1');
+    expect(getCartCount()).toBe(1);
   });
 
   it('clearSessionLostNotice limpia el aviso', async () => {
-    localStorage.setItem('cartCount', '5');
+    setCartCount(5);
     mockedAddToCart.mockResolvedValue(1);
 
     const { result } = renderHook(() => useCart(), {

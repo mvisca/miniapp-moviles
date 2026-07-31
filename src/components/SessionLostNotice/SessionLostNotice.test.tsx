@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { addToCart } from '../../api/cart';
 import { CartProvider, useCart } from '../../context/CartContext';
+import { setCartCount } from '../../utils/cache';
 import SessionLostNotice from './SessionLostNotice';
 
 vi.mock('../../api/cart');
@@ -44,7 +45,7 @@ describe('SessionLostNotice', () => {
   });
 
   it('muestra el aviso cuando la sesión se pierde y se autodescarta', async () => {
-    localStorage.setItem('cartCount', '5');
+    setCartCount(5);
     mockedAddToCart.mockResolvedValue(1);
 
     render(

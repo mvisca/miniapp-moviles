@@ -1,8 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { addToCart } from '../api/cart';
 import { isValidIncrement } from '../utils/isValidIncrement';
-
-const CART_COUNT_KEY = 'cartCount';
+import { getCartCount, setCartCount } from '../utils/cache';
 
 const SESSION_LOST_MESSAGE =
   'Se perdió el carrito anterior, se inició uno nuevo.';
@@ -18,21 +17,13 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 /**
- * Lee el `count` inicial exclusivamente desde `localStorage['cartCount']`
- * (CLAUDE.md §3: `GET /api/cart` no existe — 404 verificado, no hay forma
- * de consultar el contador al servidor sin agregar un producto).
- * Si no existe o no es un número válido, `0`.
+ * Lee el `count` inicial exclusivamente desde `localStorage` vía
+ * `getCartCount()` (CLAUDE.md §3: `GET /api/cart` no existe — 404
+ * verificado, no hay forma de consultar el contador al servidor sin
+ * agregar un producto). Si no existe o el envelope no es válido, `0`.
  */
 function readInitialCount(): number {
-  const raw = localStorage.getItem(CART_COUNT_KEY);
-
-  if (raw === null) {
-    return 0;
-  }
-
-  const value = Number(raw);
-
-  return Number.isFinite(value) ? value : 0;
+  return getCartCount() ?? 0;
 }
 
 /**
@@ -60,7 +51,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setSessionLostNotice(SESSION_LOST_MESSAGE);
     }
 
-    localStorage.setItem(CART_COUNT_KEY, String(newCount));
+    setCartCount(newCount);
     setCount(newCount);
   }
 

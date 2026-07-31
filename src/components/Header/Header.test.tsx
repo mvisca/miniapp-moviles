@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CartProvider } from '../../context/CartContext';
 import { ProductTitleProvider, useProductTitle } from '../../context/ProductTitleContext';
+import { setCartCount } from '../../utils/cache';
 import Header from './Header';
 
 // TDD baseline (TASK-004-1, ver sección "Tests required" de SPEC-004,
@@ -67,7 +68,7 @@ describe('Header', () => {
   });
 
   it('refleja el count del CartContext', () => {
-    localStorage.setItem('cartCount', '3');
+    setCartCount(3);
 
     renderHeaderAt('/');
 
