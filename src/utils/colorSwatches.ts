@@ -50,7 +50,7 @@ const COLOR_DICTIONARY: Record<string, string[]> = {
   lagoon: ['#4F9F9F'],
   pearl: ['#F5F5DC'],
   steel: ['#4682B4'],
-};
+}
 
 /**
  * Resuelve un nombre de color a uno o más hex. Normaliza a lowercase para
@@ -63,19 +63,19 @@ const COLOR_DICTIONARY: Record<string, string[]> = {
  * ya están cubiertos como entradas directas del diccionario.
  */
 export function getColorSwatches(name: string): string[] | null {
-  const normalized = name.trim().toLowerCase();
-  const direct = COLOR_DICTIONARY[normalized];
+  const normalized = name.trim().toLowerCase()
+  const direct = COLOR_DICTIONARY[normalized]
   if (direct) {
-    return direct;
+    return direct
   }
 
   if (normalized.includes('/')) {
-    const tokens = normalized.split('/').map((token) => token.trim());
-    const resolved = tokens.map((token) => COLOR_DICTIONARY[token]);
+    const tokens = normalized.split('/').map((token) => token.trim())
+    const resolved = tokens.map((token) => COLOR_DICTIONARY[token])
     if (resolved.every((swatches) => swatches !== undefined)) {
-      return resolved.flatMap((swatches) => swatches as string[]);
+      return resolved.flatMap((swatches) => swatches as string[])
     }
   }
 
-  return null;
+  return null
 }

@@ -177,7 +177,8 @@ describe('useRetryingFetch', () => {
     const fetcherB = vi.fn().mockResolvedValue('b')
 
     const { result, rerender } = renderHook(
-      ({ id }: { id: string }) => useRetryingFetch(id === 'a' ? fetcherA : fetcherB, { deps: [id] }),
+      ({ id }: { id: string }) =>
+        useRetryingFetch(id === 'a' ? fetcherA : fetcherB, { deps: [id] }),
       { initialProps: { id: 'a' } },
     )
 

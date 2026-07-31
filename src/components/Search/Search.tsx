@@ -1,12 +1,12 @@
-import type { ChangeEvent } from 'react';
-import styles from './Search.module.css';
+import type { ChangeEvent } from 'react'
+import styles from './Search.module.css'
 
 interface SearchProps {
-  value: string;
-  onChange: (value: string) => void;
+  value: string
+  onChange: (value: string) => void
 }
 
-const SEARCH_LABEL = 'Buscar por marca o modelo';
+const SEARCH_LABEL = 'Buscar por marca o modelo'
 
 /**
  * Buscador de la PLP (SPEC-005, CLAUDE.md §6): input puramente controlado,
@@ -18,8 +18,8 @@ const SEARCH_LABEL = 'Buscar por marca o modelo';
  */
 function Search({ value, onChange }: SearchProps) {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.value);
-  };
+    onChange(event.target.value)
+  }
 
   return (
     <div className={styles.search}>
@@ -35,7 +35,7 @@ function Search({ value, onChange }: SearchProps) {
         onChange={handleChange}
       />
     </div>
-  );
+  )
 }
 
-export default Search;
+export default Search

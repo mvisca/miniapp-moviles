@@ -3,6 +3,6 @@
 // "-" (CLAUDE.md §6, ProductDescription) — se unifica a "-" en ambos
 // casos para que la ficha de specs no mezcle vacíos con guiones.
 export function formatSpecValue(value: string): string {
-  const trimmed = value.trim();
-  return trimmed === '' ? '-' : trimmed;
+  const trimmed = value.trim()
+  return trimmed === '' ? '-' : trimmed
 }

@@ -1,9 +1,9 @@
-import styles from './ProductImage.module.css';
+import styles from './ProductImage.module.css'
 
 interface ProductImageProps {
-  imgUrl: string;
-  brand: string;
-  model: string;
+  imgUrl: string
+  brand: string
+  model: string
 }
 
 /**
@@ -11,13 +11,7 @@ interface ProductImageProps {
  * la PDP. Sin estado ni fetch propio — recibe todo por props.
  */
 function ProductImage({ imgUrl, brand, model }: ProductImageProps) {
-  return (
-    <img
-      className={styles.image}
-      src={imgUrl}
-      alt={`${brand} ${model}`}
-    />
-  );
+  return <img className={styles.image} src={imgUrl} alt={`${brand} ${model}`} />
 }
 
-export default ProductImage;
+export default ProductImage

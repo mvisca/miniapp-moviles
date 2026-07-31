@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import logo from '../../assets/logo.svg';
-import { useCart } from '../../context/CartContext';
-import { useProductTitle } from '../../context/ProductTitleContext';
-import styles from './Header.module.css';
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import logo from '../../assets/logo.svg'
+import { useCart } from '../../context/CartContext'
+import { useProductTitle } from '../../context/ProductTitleContext'
+import styles from './Header.module.css'
 
 /**
  * Segundo segmento del breadcrumb en la PDP mientras el detalle del
@@ -12,17 +12,17 @@ import styles from './Header.module.css';
  * `‹marca› ‹modelo›` una vez exista el dato real — fuera de alcance aquí.
  */
 function LoadingEllipsis() {
-  const [dots, setDots] = useState(1);
+  const [dots, setDots] = useState(1)
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setDots((prev) => (prev % 3) + 1);
-    }, 500);
+      setDots((prev) => (prev % 3) + 1)
+    }, 500)
 
-    return () => clearInterval(intervalId);
-  }, []);
+    return () => clearInterval(intervalId)
+  }, [])
 
-  return <span data-testid="breadcrumb-ellipsis">{'.'.repeat(dots)}</span>;
+  return <span data-testid="breadcrumb-ellipsis">{'.'.repeat(dots)}</span>
 }
 
 /**
@@ -31,13 +31,13 @@ function LoadingEllipsis() {
  * CartContext.
  */
 function Header() {
-  const { count } = useCart();
-  const { title } = useProductTitle();
-  const location = useLocation();
-  const isProductDetail = location.pathname.startsWith('/product/');
+  const { count } = useCart()
+  const { title } = useProductTitle()
+  const location = useLocation()
+  const isProductDetail = location.pathname.startsWith('/product/')
 
-  const isFirstRender = useRef(true);
-  const [isBouncing, setIsBouncing] = useState(false);
+  const isFirstRender = useRef(true)
+  const [isBouncing, setIsBouncing] = useState(false)
 
   // Bounce de tamaño del indicador de carrito cada vez que `count` cambia
   // (SPEC-011/CLAUDE.md §6) — no en el montaje inicial (restaurar
@@ -45,11 +45,11 @@ function Header() {
   // clase para poder re-disparar la animación en el próximo cambio.
   useEffect(() => {
     if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
+      isFirstRender.current = false
+      return
     }
-    setIsBouncing(true);
-  }, [count]);
+    setIsBouncing(true)
+  }, [count])
 
   return (
     <header className={styles.header}>
@@ -80,7 +80,7 @@ function Header() {
         </nav>
       </div>
     </header>
-  );
+  )
 }
 
-export default Header;
+export default Header

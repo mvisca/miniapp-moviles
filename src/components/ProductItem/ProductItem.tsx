@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom';
-import type { Product } from '../../types/domain';
-import styles from './ProductItem.module.css';
+import { Link } from 'react-router-dom'
+import type { Product } from '../../types/domain'
+import styles from './ProductItem.module.css'
 
 interface ProductItemProps {
-  product: Product;
+  product: Product
 }
 
 /**
@@ -14,7 +14,7 @@ interface ProductItemProps {
  * traduce a `aria-disabled` + estilo, no a bloquear el link.
  */
 function ProductItem({ product }: ProductItemProps) {
-  const isAvailable = product.price !== null;
+  const isAvailable = product.price !== null
 
   return (
     <Link
@@ -37,7 +37,7 @@ function ProductItem({ product }: ProductItemProps) {
         )}
       </div>
     </Link>
-  );
+  )
 }
 
-export default ProductItem;
+export default ProductItem

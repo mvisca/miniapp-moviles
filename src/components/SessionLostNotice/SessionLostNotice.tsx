@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
-import { useCart } from '../../context/CartContext';
-import styles from './SessionLostNotice.module.css';
+import { useEffect } from 'react'
+import { useCart } from '../../context/CartContext'
+import styles from './SessionLostNotice.module.css'
 
-const AUTO_DISMISS_MS = 4000;
+const AUTO_DISMISS_MS = 4000
 
 /**
  * Aviso efímero de sesión de carrito perdida (CLAUDE.md §3). Se renderiza
@@ -12,25 +12,25 @@ const AUTO_DISMISS_MS = 4000;
  * `clearSessionLostNotice`; también puede cerrarse a mano.
  */
 function SessionLostNotice() {
-  const { sessionLostNotice, clearSessionLostNotice } = useCart();
+  const { sessionLostNotice, clearSessionLostNotice } = useCart()
 
   useEffect(() => {
-    if (!sessionLostNotice) return;
+    if (!sessionLostNotice) return
 
-    const timeoutId = setTimeout(clearSessionLostNotice, AUTO_DISMISS_MS);
+    const timeoutId = setTimeout(clearSessionLostNotice, AUTO_DISMISS_MS)
 
-    return () => clearTimeout(timeoutId);
-  }, [sessionLostNotice, clearSessionLostNotice]);
+    return () => clearTimeout(timeoutId)
+  }, [sessionLostNotice, clearSessionLostNotice])
 
   if (!sessionLostNotice) {
-    return null;
+    return null
   }
 
   return (
     <div className={`${styles.notice} fadeIn`} role="status">
       {sessionLostNotice}
     </div>
-  );
+  )
 }
 
-export default SessionLostNotice;
+export default SessionLostNotice

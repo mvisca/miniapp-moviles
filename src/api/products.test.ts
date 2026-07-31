@@ -14,12 +14,7 @@ vi.mock('./client', () => {
 })
 
 import { ApiError, request } from './client'
-import {
-  getProductDetail,
-  getProducts,
-  mapProductDetail,
-  mapProductListItem,
-} from './products'
+import { getProductDetail, getProducts, mapProductDetail, mapProductListItem } from './products'
 import { setProductDetailCache, setProductsCache } from '../utils/cache'
 import type { Product, ProductDetail } from '../types/domain'
 

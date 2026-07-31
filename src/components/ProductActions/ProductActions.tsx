@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import type { ProductDetail } from '../../types/domain';
-import { getColorSwatches } from '../../utils/colorSwatches';
-import { normalizeStorageName } from '../../utils/normalizeStorageName';
-import styles from './ProductActions.module.css';
+import { useEffect, useRef, useState } from 'react'
+import type { ProductDetail } from '../../types/domain'
+import { getColorSwatches } from '../../utils/colorSwatches'
+import { normalizeStorageName } from '../../utils/normalizeStorageName'
+import styles from './ProductActions.module.css'
 
-type Feedback = 'idle' | 'pending' | 'success' | 'error';
+type Feedback = 'idle' | 'pending' | 'success' | 'error'
 
 interface ProductActionsProps {
-  product: ProductDetail;
+  product: ProductDetail
   /**
    * Hook opcional para SPEC-007 (mutación real contra `addToCart` de
    * `api/cart.ts`). Si no se provee, el click no hace nada (comportamiento
@@ -15,10 +15,7 @@ interface ProductActionsProps {
    * conduce el feedback visual del botón (idle -> pending -> success|error
    * -> idle tras ~2s).
    */
-  onAddToCart?: (selection: {
-    colorCode?: number;
-    storageCode?: number;
-  }) => Promise<void>;
+  onAddToCart?: (selection: { colorCode?: number; storageCode?: number }) => Promise<void>
 }
 
 const FEEDBACK_LABEL: Record<Feedback, string> = {
@@ -26,7 +23,7 @@ const FEEDBACK_LABEL: Record<Feedback, string> = {
   pending: 'Añadiendo…',
   success: '¡Ya está en el carrito!',
   error: 'No se pudo añadir, probá de nuevo',
-};
+}
 
 /**
  * Preselección (CLAUDE.md §6): si hay una única opción, se preselecciona
@@ -34,12 +31,12 @@ const FEEDBACK_LABEL: Record<Feedback, string> = {
  * hasta que el usuario elija explícitamente un botón.
  */
 function defaultSelection<T extends { code: number }>(options: T[]): number | undefined {
-  return options.length === 1 ? options[0].code : undefined;
+  return options.length === 1 ? options[0].code : undefined
 }
 
 /** Círculo de color simple, o stack superpuesto si el nombre resuelve a >1 color. */
 function ColorSwatch({ name }: { name: string }) {
-  const swatches = getColorSwatches(name);
+  const swatches = getColorSwatches(name)
 
   if (!swatches) {
     return (
@@ -48,7 +45,7 @@ function ColorSwatch({ name }: { name: string }) {
           ✕
         </span>
       </span>
-    );
+    )
   }
 
   return (
@@ -62,7 +59,7 @@ function ColorSwatch({ name }: { name: string }) {
         />
       ))}
     </span>
-  );
+  )
 }
 
 /**
@@ -89,47 +86,45 @@ function ColorSwatch({ name }: { name: string }) {
 function ProductActions({ product, onAddToCart }: ProductActionsProps) {
   const [storageCode, setStorageCode] = useState<number | undefined>(
     defaultSelection(product.storages),
-  );
-  const [colorCode, setColorCode] = useState<number | undefined>(
-    defaultSelection(product.colors),
-  );
-  const [feedback, setFeedback] = useState<Feedback>('idle');
-  const revertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  )
+  const [colorCode, setColorCode] = useState<number | undefined>(defaultSelection(product.colors))
+  const [feedback, setFeedback] = useState<Feedback>('idle')
+  const revertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     return () => {
       if (revertTimeoutRef.current !== null) {
-        clearTimeout(revertTimeoutRef.current);
+        clearTimeout(revertTimeoutRef.current)
       }
-    };
-  }, []);
+    }
+  }, [])
 
-  const isAvailable = product.price !== null;
+  const isAvailable = product.price !== null
   const hasSelection =
     (product.storages.length === 0 || storageCode !== undefined) &&
-    (product.colors.length === 0 || colorCode !== undefined);
+    (product.colors.length === 0 || colorCode !== undefined)
 
   function scheduleRevertToIdle() {
     if (revertTimeoutRef.current !== null) {
-      clearTimeout(revertTimeoutRef.current);
+      clearTimeout(revertTimeoutRef.current)
     }
     revertTimeoutRef.current = setTimeout(() => {
-      setFeedback('idle');
-      revertTimeoutRef.current = null;
-    }, 2000);
+      setFeedback('idle')
+      revertTimeoutRef.current = null
+    }, 2000)
   }
 
   async function handleAddToCart() {
-    if (!onAddToCart) return;
+    if (!onAddToCart) return
 
-    setFeedback('pending');
+    setFeedback('pending')
     try {
-      await onAddToCart({ colorCode, storageCode });
-      setFeedback('success');
+      await onAddToCart({ colorCode, storageCode })
+      setFeedback('success')
     } catch {
-      setFeedback('error');
+      setFeedback('error')
     }
-    scheduleRevertToIdle();
+    scheduleRevertToIdle()
   }
 
   return (
@@ -199,7 +194,7 @@ function ProductActions({ product, onAddToCart }: ProductActionsProps) {
         )}
       </button>
     </div>
-  );
+  )
 }
 
-export default ProductActions;
+export default ProductActions

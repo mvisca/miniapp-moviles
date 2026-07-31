@@ -7,10 +7,10 @@
  */
 export function parsePrice(raw: string): number | null {
   if (raw.trim() === '') {
-    return null;
+    return null
   }
 
-  const value = Number(raw);
+  const value = Number(raw)
 
-  return Number.isFinite(value) ? value : null;
+  return Number.isFinite(value) ? value : null
 }

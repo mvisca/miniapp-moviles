@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   PRODUCT_CACHE_TTL_MS,
   getProductsCache,
@@ -7,8 +7,8 @@ import {
   setProductDetailCache,
   getCartCount,
   setCartCount,
-} from './cache';
-import type { Product, ProductDetail } from '../types/domain';
+} from './cache'
+import type { Product, ProductDetail } from '../types/domain'
 
 const product: Product = {
   id: '1',
@@ -16,7 +16,7 @@ const product: Product = {
   model: 'A1',
   price: 100,
   imgUrl: 'a.png',
-};
+}
 
 const productDetail: ProductDetail = {
   id: '1',
@@ -35,95 +35,95 @@ const productDetail: ProductDetail = {
   weight: '100 g',
   colors: [],
   storages: [],
-};
+}
 
 describe('cache', () => {
   beforeEach(() => {
-    localStorage.clear();
-    vi.useFakeTimers();
-  });
+    localStorage.clear()
+    vi.useFakeTimers()
+  })
 
   afterEach(() => {
-    vi.useRealTimers();
-  });
+    vi.useRealTimers()
+  })
 
   describe('getProductsCache/setProductsCache', () => {
     it('devuelve los datos originales para una entrada fresca', () => {
-      vi.setSystemTime(new Date('2026-07-30T10:00:00Z'));
-      setProductsCache([product]);
+      vi.setSystemTime(new Date('2026-07-30T10:00:00Z'))
+      setProductsCache([product])
 
-      expect(getProductsCache()).toEqual([product]);
-    });
+      expect(getProductsCache()).toEqual([product])
+    })
 
     it('devuelve null para una entrada expirada', () => {
-      vi.setSystemTime(new Date('2026-07-30T10:00:00Z'));
-      setProductsCache([product]);
+      vi.setSystemTime(new Date('2026-07-30T10:00:00Z'))
+      setProductsCache([product])
 
-      vi.advanceTimersByTime(PRODUCT_CACHE_TTL_MS + 1);
+      vi.advanceTimersByTime(PRODUCT_CACHE_TTL_MS + 1)
 
-      expect(getProductsCache()).toBeNull();
-    });
+      expect(getProductsCache()).toBeNull()
+    })
 
     it('devuelve null y no lanza para JSON corrupto', () => {
-      localStorage.setItem('products', 'not json');
+      localStorage.setItem('products', 'not json')
 
-      expect(getProductsCache()).toBeNull();
-      expect(localStorage.getItem('products')).toBeNull();
-    });
+      expect(getProductsCache()).toBeNull()
+      expect(localStorage.getItem('products')).toBeNull()
+    })
 
     it('devuelve null para una key inexistente', () => {
-      expect(getProductsCache()).toBeNull();
-    });
-  });
+      expect(getProductsCache()).toBeNull()
+    })
+  })
 
   describe('getProductDetailCache/setProductDetailCache', () => {
     it('devuelve los datos originales para una entrada fresca', () => {
-      setProductDetailCache('1', productDetail);
+      setProductDetailCache('1', productDetail)
 
-      expect(getProductDetailCache('1')).toEqual(productDetail);
-    });
+      expect(getProductDetailCache('1')).toEqual(productDetail)
+    })
 
     it('devuelve null para una entrada expirada', () => {
-      setProductDetailCache('1', productDetail);
+      setProductDetailCache('1', productDetail)
 
-      vi.advanceTimersByTime(PRODUCT_CACHE_TTL_MS + 1);
+      vi.advanceTimersByTime(PRODUCT_CACHE_TTL_MS + 1)
 
-      expect(getProductDetailCache('1')).toBeNull();
-    });
+      expect(getProductDetailCache('1')).toBeNull()
+    })
 
     it('aísla la caché por id: expirar/leer un id no afecta a otro', () => {
-      setProductDetailCache('1', productDetail);
-      setProductDetailCache('2', { ...productDetail, id: '2' });
+      setProductDetailCache('1', productDetail)
+      setProductDetailCache('2', { ...productDetail, id: '2' })
 
-      expect(getProductDetailCache('1')).toEqual(productDetail);
-      expect(getProductDetailCache('2')).toEqual({ ...productDetail, id: '2' });
-    });
-  });
+      expect(getProductDetailCache('1')).toEqual(productDetail)
+      expect(getProductDetailCache('2')).toEqual({ ...productDetail, id: '2' })
+    })
+  })
 
   describe('getCartCount/setCartCount', () => {
     it('devuelve el count persistido', () => {
-      setCartCount(3);
+      setCartCount(3)
 
-      expect(getCartCount()).toBe(3);
-    });
+      expect(getCartCount()).toBe(3)
+    })
 
     it('devuelve null para una key inexistente', () => {
-      expect(getCartCount()).toBeNull();
-    });
+      expect(getCartCount()).toBeNull()
+    })
 
     it('nunca expira, incluso mucho más allá de PRODUCT_CACHE_TTL_MS', () => {
-      setCartCount(3);
+      setCartCount(3)
 
-      vi.advanceTimersByTime(PRODUCT_CACHE_TTL_MS * 100);
+      vi.advanceTimersByTime(PRODUCT_CACHE_TTL_MS * 100)
 
-      expect(getCartCount()).toBe(3);
-    });
+      expect(getCartCount()).toBe(3)
+    })
 
     it('devuelve null y no lanza para JSON corrupto', () => {
-      localStorage.setItem('cartCount', 'not json');
+      localStorage.setItem('cartCount', 'not json')
 
-      expect(getCartCount()).toBeNull();
-      expect(localStorage.getItem('cartCount')).toBeNull();
-    });
-  });
-});
+      expect(getCartCount()).toBeNull()
+      expect(localStorage.getItem('cartCount')).toBeNull()
+    })
+  })
+})

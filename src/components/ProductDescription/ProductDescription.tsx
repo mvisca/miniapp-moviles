@@ -1,9 +1,9 @@
-import type { ProductDetail } from '../../types/domain';
-import { formatSpecValue } from '../../utils/formatSpecValue';
-import styles from './ProductDescription.module.css';
+import type { ProductDetail } from '../../types/domain'
+import { formatSpecValue } from '../../utils/formatSpecValue'
+import styles from './ProductDescription.module.css'
 
 interface ProductDescriptionProps {
-  product: ProductDetail;
+  product: ProductDetail
 }
 
 /**
@@ -20,7 +20,7 @@ interface ProductDescriptionProps {
  * (SPEC-005).
  */
 function ProductDescription({ product }: ProductDescriptionProps) {
-  const isAvailable = product.price !== null;
+  const isAvailable = product.price !== null
 
   return (
     <div className={styles.description}>
@@ -33,12 +33,10 @@ function ProductDescription({ product }: ProductDescriptionProps) {
       )}
       <ul className={styles.specs}>
         <li>
-          <span className={styles.label}>CPU:</span>{' '}
-          <span>{formatSpecValue(product.cpu)}</span>
+          <span className={styles.label}>CPU:</span> <span>{formatSpecValue(product.cpu)}</span>
         </li>
         <li>
-          <span className={styles.label}>RAM:</span>{' '}
-          <span>{formatSpecValue(product.ram)}</span>
+          <span className={styles.label}>RAM:</span> <span>{formatSpecValue(product.ram)}</span>
         </li>
         <li>
           <span className={styles.label}>Sistema operativo:</span>{' '}
@@ -65,12 +63,11 @@ function ProductDescription({ product }: ProductDescriptionProps) {
           <span>{formatSpecValue(product.dimensions)}</span>
         </li>
         <li>
-          <span className={styles.label}>Peso:</span>{' '}
-          <span>{formatSpecValue(product.weight)}</span>
+          <span className={styles.label}>Peso:</span> <span>{formatSpecValue(product.weight)}</span>
         </li>
       </ul>
     </div>
-  );
+  )
 }
 
-export default ProductDescription;
+export default ProductDescription

@@ -25,7 +25,13 @@ afterEach(() => {
 describe('App routing shell', () => {
   it('renders the ProductListPage grid at /', async () => {
     getProductsMock.mockResolvedValueOnce([
-      { id: 'example-id', brand: 'Acer', model: 'Liquid E700', price: 299, imgUrl: 'https://example.com/1.png' },
+      {
+        id: 'example-id',
+        brand: 'Acer',
+        model: 'Liquid E700',
+        price: 299,
+        imgUrl: 'https://example.com/1.png',
+      },
     ])
 
     render(
@@ -39,7 +45,13 @@ describe('App routing shell', () => {
 
   it('navigates from / to /product/:id and mounts the ProductDetailPage', async () => {
     getProductsMock.mockResolvedValueOnce([
-      { id: 'example-id', brand: 'Acer', model: 'Liquid E700', price: 299, imgUrl: 'https://example.com/1.png' },
+      {
+        id: 'example-id',
+        brand: 'Acer',
+        model: 'Liquid E700',
+        price: 299,
+        imgUrl: 'https://example.com/1.png',
+      },
     ])
     getProductDetailMock.mockReturnValue(new Promise(() => {}))
 

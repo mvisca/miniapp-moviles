@@ -3,11 +3,7 @@ import { ApiError, request } from './client'
 
 const BASE_URL = ''
 
-function mockFetchOnce(response: {
-  ok: boolean
-  status: number
-  json?: () => Promise<unknown>
-}) {
+function mockFetchOnce(response: { ok: boolean; status: number; json?: () => Promise<unknown> }) {
   const fetchMock = vi.fn().mockResolvedValue(response)
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock

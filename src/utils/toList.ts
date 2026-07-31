@@ -3,5 +3,5 @@
  * String → array de un elemento; array → se devuelve tal cual (identidad).
  */
 export function toList(v: string | string[]): string[] {
-  return Array.isArray(v) ? v : [v];
+  return Array.isArray(v) ? v : [v]
 }

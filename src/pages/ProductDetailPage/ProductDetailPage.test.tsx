@@ -1,12 +1,12 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '../../api/client';
-import { CartProvider } from '../../context/CartContext';
-import { ProductTitleProvider } from '../../context/ProductTitleContext';
-import type { ProductDetail } from '../../types/domain';
-import ProductDetailPage from './ProductDetailPage';
+import { act, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ApiError } from '../../api/client'
+import { CartProvider } from '../../context/CartContext'
+import { ProductTitleProvider } from '../../context/ProductTitleContext'
+import type { ProductDetail } from '../../types/domain'
+import ProductDetailPage from './ProductDetailPage'
 
 // TDD baseline (TASK-006-4, ver "Tests required" de SPEC-006):
 // - renderiza los specs del producto (incluida `screenResolution`, que ya
@@ -30,24 +30,24 @@ import ProductDetailPage from './ProductDetailPage';
 /** Flushea microtasks pendientes (resoluciones/rechazos de promesas) sin avanzar el reloj. */
 async function flush() {
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(0);
-  });
+    await vi.advanceTimersByTimeAsync(0)
+  })
 }
 
 /** Avanza el reloj fake `ms` y flushea las promesas resultantes de timers que se disparen. */
 async function advance(ms: number) {
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(ms);
-  });
+    await vi.advanceTimersByTimeAsync(ms)
+  })
 }
 
-vi.mock('../../api/products');
-vi.mock('../../api/cart');
-import { getProductDetail } from '../../api/products';
-import { addToCart } from '../../api/cart';
+vi.mock('../../api/products')
+vi.mock('../../api/cart')
+import { getProductDetail } from '../../api/products'
+import { addToCart } from '../../api/cart'
 
-const getProductDetailMock = vi.mocked(getProductDetail);
-const addToCartMock = vi.mocked(addToCart);
+const getProductDetailMock = vi.mocked(getProductDetail)
+const addToCartMock = vi.mocked(addToCart)
 
 const product: ProductDetail = {
   id: '1',
@@ -66,12 +66,12 @@ const product: ProductDetail = {
   weight: '150 g',
   colors: [{ code: 1, name: 'Negro' }],
   storages: [{ code: 1, name: '8GB' }],
-};
+}
 
 afterEach(() => {
-  vi.resetAllMocks();
-  localStorage.clear();
-});
+  vi.resetAllMocks()
+  localStorage.clear()
+})
 
 function renderPage(id = '1') {
   return render(
@@ -85,144 +85,140 @@ function renderPage(id = '1') {
         </MemoryRouter>
       </ProductTitleProvider>
     </CartProvider>,
-  );
+  )
 }
 
 describe('ProductDetailPage', () => {
   it('muestra "Cargando producto..." mientras el fetch está en curso', () => {
-    getProductDetailMock.mockReturnValue(new Promise(() => {}));
+    getProductDetailMock.mockReturnValue(new Promise(() => {}))
 
-    renderPage();
+    renderPage()
 
-    expect(screen.getByText('Cargando producto...')).toBeInTheDocument();
-  });
+    expect(screen.getByText('Cargando producto...')).toBeInTheDocument()
+  })
 
   it('renderiza los tres bloques con los specs del producto tras el fetch', async () => {
-    getProductDetailMock.mockResolvedValueOnce(product);
+    getProductDetailMock.mockResolvedValueOnce(product)
 
-    renderPage();
+    renderPage()
 
     await waitFor(() => {
-      expect(screen.getByText('Acer')).toBeInTheDocument();
-    });
+      expect(screen.getByText('Acer')).toBeInTheDocument()
+    })
 
-    expect(screen.getByText('Liquid E700')).toBeInTheDocument();
+    expect(screen.getByText('Liquid E700')).toBeInTheDocument()
     // `screenResolution` ya viene corregida del swap displaySize/displayResolution.
-    expect(screen.getByText('480 x 854 pixels')).toBeInTheDocument();
-    expect(screen.getByText('5 MP')).toBeInTheDocument();
-    expect(screen.getByText('VGA')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Acer Liquid E700' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /añadir al carrito/i })).toBeInTheDocument();
-  });
+    expect(screen.getByText('480 x 854 pixels')).toBeInTheDocument()
+    expect(screen.getByText('5 MP')).toBeInTheDocument()
+    expect(screen.getByText('VGA')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Acer Liquid E700' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /añadir al carrito/i })).toBeInTheDocument()
+  })
 
   it('muestra "Producto no encontrado" + link a la PLP cuando la API responde 404', async () => {
-    getProductDetailMock.mockRejectedValueOnce(new ApiError(404, 'Not found'));
+    getProductDetailMock.mockRejectedValueOnce(new ApiError(404, 'Not found'))
 
-    renderPage('inexistente');
+    renderPage('inexistente')
 
-    expect(await screen.findByText('Producto no encontrado')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /volver al listado/i })).toBeInTheDocument();
-  });
+    expect(await screen.findByText('Producto no encontrado')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /volver al listado/i })).toBeInTheDocument()
+  })
 
   it('un 404 va directo a "Producto no encontrado" sin pasar por reintentos', async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers()
     try {
-      getProductDetailMock.mockRejectedValueOnce(new ApiError(404, 'Not found'));
+      getProductDetailMock.mockRejectedValueOnce(new ApiError(404, 'Not found'))
 
-      renderPage('inexistente');
+      renderPage('inexistente')
 
-      await flush();
+      await flush()
 
-      expect(screen.getByText('Producto no encontrado')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /volver al listado/i })).toBeInTheDocument();
-      expect(getProductDetailMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('Producto no encontrado')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /volver al listado/i })).toBeInTheDocument()
+      expect(getProductDetailMock).toHaveBeenCalledTimes(1)
 
       // Ningún timer de reintento agendado: avanzar el reloj no dispara más fetches.
-      await advance(60000);
-      expect(getProductDetailMock).toHaveBeenCalledTimes(1);
+      await advance(60000)
+      expect(getProductDetailMock).toHaveBeenCalledTimes(1)
     } finally {
-      vi.useRealTimers();
+      vi.useRealTimers()
     }
-  });
+  })
 
   it('reintenta automáticamente tras un fallo y termina en éxito sin intervención del usuario', async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers()
     try {
-      getProductDetailMock.mockRejectedValueOnce(new Error('network error'));
-      getProductDetailMock.mockResolvedValueOnce(product);
+      getProductDetailMock.mockRejectedValueOnce(new Error('network error'))
+      getProductDetailMock.mockResolvedValueOnce(product)
 
-      renderPage();
+      renderPage()
 
-      await flush();
-      expect(
-        screen.getByText(/El servidor no está despierto todavía/),
-      ).toBeInTheDocument();
-      expect(getProductDetailMock).toHaveBeenCalledTimes(1);
+      await flush()
+      expect(screen.getByText(/El servidor no está despierto todavía/)).toBeInTheDocument()
+      expect(getProductDetailMock).toHaveBeenCalledTimes(1)
 
       // Se cumple el primer delay (2s) -> segundo intento, que resuelve con éxito.
-      await advance(2000);
+      await advance(2000)
 
-      expect(screen.getByText('Acer')).toBeInTheDocument();
-      expect(getProductDetailMock).toHaveBeenCalledTimes(2);
+      expect(screen.getByText('Acer')).toBeInTheDocument()
+      expect(getProductDetailMock).toHaveBeenCalledTimes(2)
     } finally {
-      vi.useRealTimers();
+      vi.useRealTimers()
     }
-  });
+  })
 
   it('agota los reintentos automáticos y cae al estado de error manual con botón "Reintentar"', async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers()
     try {
-      getProductDetailMock.mockRejectedValue(new Error('always fails'));
+      getProductDetailMock.mockRejectedValue(new Error('always fails'))
 
-      renderPage();
+      renderPage()
 
       // Intento inicial (1) + 5 reintentos = 6 intentos totales, delays [2,4,6,8,10].
-      await flush();
-      expect(
-        screen.getByText(/El servidor no está despierto todavía/),
-      ).toBeInTheDocument();
+      await flush()
+      expect(screen.getByText(/El servidor no está despierto todavía/)).toBeInTheDocument()
 
-      await advance(2000);
-      await advance(4000);
-      await advance(6000);
-      await advance(8000);
-      await advance(10000);
+      await advance(2000)
+      await advance(4000)
+      await advance(6000)
+      await advance(8000)
+      await advance(10000)
 
-      expect(screen.getByText('No se pudo cargar el producto.')).toBeInTheDocument();
-      expect(getProductDetailMock).toHaveBeenCalledTimes(6);
+      expect(screen.getByText('No se pudo cargar el producto.')).toBeInTheDocument()
+      expect(getProductDetailMock).toHaveBeenCalledTimes(6)
 
-      const retryButton = screen.getByRole('button', { name: /reintentar/i });
-      getProductDetailMock.mockResolvedValueOnce(product);
+      const retryButton = screen.getByRole('button', { name: /reintentar/i })
+      getProductDetailMock.mockResolvedValueOnce(product)
 
       await act(async () => {
-        retryButton.click();
-        await vi.advanceTimersByTimeAsync(0);
-      });
+        retryButton.click()
+        await vi.advanceTimersByTimeAsync(0)
+      })
 
-      expect(screen.getByText('Acer')).toBeInTheDocument();
-      expect(getProductDetailMock).toHaveBeenCalledTimes(7);
+      expect(screen.getByText('Acer')).toBeInTheDocument()
+      expect(getProductDetailMock).toHaveBeenCalledTimes(7)
     } finally {
-      vi.useRealTimers();
+      vi.useRealTimers()
     }
-  });
+  })
 
   it('click en "Añadir al carrito" llama a addToCart con el id y los códigos seleccionados', async () => {
-    const user = userEvent.setup();
-    getProductDetailMock.mockResolvedValueOnce(product);
-    addToCartMock.mockResolvedValueOnce(1);
+    const user = userEvent.setup()
+    getProductDetailMock.mockResolvedValueOnce(product)
+    addToCartMock.mockResolvedValueOnce(1)
 
-    renderPage();
+    renderPage()
 
     await waitFor(() => {
-      expect(screen.getByText('Acer')).toBeInTheDocument();
-    });
+      expect(screen.getByText('Acer')).toBeInTheDocument()
+    })
 
-    await user.click(screen.getByRole('button', { name: /añadir al carrito/i }));
+    await user.click(screen.getByRole('button', { name: /añadir al carrito/i }))
 
     expect(addToCartMock).toHaveBeenCalledWith(
       product.id,
       product.colors[0].code,
       product.storages[0].code,
-    );
-  });
-});
+    )
+  })
+})

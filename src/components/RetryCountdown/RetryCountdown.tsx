@@ -1,9 +1,9 @@
-import styles from './RetryCountdown.module.css';
+import styles from './RetryCountdown.module.css'
 
 interface RetryCountdownProps {
-  attempt: number;
-  totalAttempts: number;
-  secondsRemaining: number;
+  attempt: number
+  totalAttempts: number
+  secondsRemaining: number
 }
 
 /**
@@ -27,7 +27,7 @@ function RetryCountdown({ attempt, totalAttempts, secondsRemaining }: RetryCount
         {attempt}/{totalAttempts})
       </p>
     </div>
-  );
+  )
 }
 
-export default RetryCountdown;
+export default RetryCountdown

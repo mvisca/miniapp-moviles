@@ -1,20 +1,20 @@
-import { useCallback, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { getProductDetail } from '../../api/products';
-import { ApiError } from '../../api/client';
-import { useRetryingFetch } from '../../hooks/useRetryingFetch';
-import RetryCountdown from '../../components/RetryCountdown/RetryCountdown';
-import ProductImage from '../../components/ProductImage/ProductImage';
-import ProductDescription from '../../components/ProductDescription/ProductDescription';
-import ProductActions from '../../components/ProductActions/ProductActions';
-import { useCart } from '../../context/CartContext';
-import { useProductTitle } from '../../context/ProductTitleContext';
-import styles from './ProductDetailPage.module.css';
+import { useCallback, useEffect } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { getProductDetail } from '../../api/products'
+import { ApiError } from '../../api/client'
+import { useRetryingFetch } from '../../hooks/useRetryingFetch'
+import RetryCountdown from '../../components/RetryCountdown/RetryCountdown'
+import ProductImage from '../../components/ProductImage/ProductImage'
+import ProductDescription from '../../components/ProductDescription/ProductDescription'
+import ProductActions from '../../components/ProductActions/ProductActions'
+import { useCart } from '../../context/CartContext'
+import { useProductTitle } from '../../context/ProductTitleContext'
+import styles from './ProductDetailPage.module.css'
 
-const TOTAL_ATTEMPTS = 5;
+const TOTAL_ATTEMPTS = 5
 
 function isNotFound(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 404;
+  return error instanceof ApiError && error.status === 404
 }
 
 /**
@@ -32,12 +32,12 @@ function isNotFound(error: unknown): boolean {
  * side-effect de título.
  */
 function ProductDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const { setTitle } = useProductTitle();
-  const { addItem } = useCart();
+  const { id } = useParams<{ id: string }>()
+  const { setTitle } = useProductTitle()
+  const { addItem } = useCart()
 
-  const fetcher = useCallback(() => getProductDetail(id!), [id]);
-  const shouldRetry = useCallback((error: unknown) => !isNotFound(error), []);
+  const fetcher = useCallback(() => getProductDetail(id!), [id])
+  const shouldRetry = useCallback((error: unknown) => !isNotFound(error), [])
 
   const {
     status,
@@ -46,21 +46,21 @@ function ProductDetailPage() {
     attempt,
     secondsRemaining,
     retry,
-  } = useRetryingFetch(fetcher, { deps: [id], shouldRetry });
+  } = useRetryingFetch(fetcher, { deps: [id], shouldRetry })
 
   useEffect(() => {
-    if (!product) return;
-    setTitle(`${product.brand} ${product.model}`);
-  }, [product, setTitle]);
+    if (!product) return
+    setTitle(`${product.brand} ${product.model}`)
+  }, [product, setTitle])
 
   useEffect(() => {
     return () => {
-      setTitle(null);
-    };
-  }, [setTitle]);
+      setTitle(null)
+    }
+  }, [setTitle])
 
   if (status === 'loading') {
-    return <p className={styles.message}>Cargando producto...</p>;
+    return <p className={styles.message}>Cargando producto...</p>
   }
 
   if (status === 'retrying') {
@@ -70,7 +70,7 @@ function ProductDetailPage() {
         totalAttempts={TOTAL_ATTEMPTS}
         secondsRemaining={secondsRemaining ?? 0}
       />
-    );
+    )
   }
 
   if (status === 'error') {
@@ -80,7 +80,7 @@ function ProductDetailPage() {
           <p>Producto no encontrado</p>
           <Link to="/">Volver al listado</Link>
         </div>
-      );
+      )
     }
 
     return (
@@ -90,11 +90,11 @@ function ProductDetailPage() {
           Reintentar
         </button>
       </div>
-    );
+    )
   }
 
   if (!product) {
-    return null;
+    return null
   }
 
   return (
@@ -105,13 +105,13 @@ function ProductDetailPage() {
         <ProductActions
           product={product}
           onAddToCart={({ colorCode, storageCode }) => {
-            if (colorCode === undefined || storageCode === undefined) return Promise.resolve();
-            return addItem(product.id, colorCode, storageCode);
+            if (colorCode === undefined || storageCode === undefined) return Promise.resolve()
+            return addItem(product.id, colorCode, storageCode)
           }}
         />
       </div>
     </div>
-  );
+  )
 }
 
-export default ProductDetailPage;
+export default ProductDetailPage
