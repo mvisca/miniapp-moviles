@@ -18,6 +18,7 @@ Backend real: `https://itx-frontend-test.onrender.com` (API REST ya provista, no
 | Routing | React Router DOM v6 (Browser Router, sin `#`) |
 | Testing | Vitest + React Testing Library |
 | Linter | ESLint 10.8.0 (flat config), incluido con el scaffold de Vite + `@vitejs/plugin-react` — versión confirmada por el scaffold instalado; se esperaba una 9.x, pero `create-vite` trae la última major disponible en el momento del scaffold |
+| Formateador | Prettier (`semi: false`, `singleQuote: true`, `printWidth: 100`), agregado junto con `eslint-config-prettier` para desactivar en ESLint las reglas de estilo que Prettier ya gobierna — sin solapamiento entre ambas herramientas |
 | Gestor de paquetes | pnpm (se documenta alternativa con npm en README) |
 | Estado global | React Context (solo contador de carrito) |
 | Estilos | CSS Modules |
@@ -166,6 +167,14 @@ Las únicas inconsistencias reales encontradas (precio vacío, campos polimórfi
 - **Detalle de producto** (`GET /api/product/:id`): una clave independiente por producto, `product_detail_<id>` → `{ data: ProductDetail, timestamp }`. Motivo: cada detalle se pide y expira de forma independiente; una clave por id evita reescribir/reparsear todo un diccionario en cada visita a un PDP, y aísla la corrupción — un JSON inválido en una entrada no invalida el resto del caché. El volumen (máximo ~100 entradas, catálogo completo) es intrascendente para la cuota de `localStorage`.
 - **Carrito**: `cartCount`, un entero, clave separada — sin relación con el TTL de 1 hora del catálogo.
 
+### Abstracción de `cache.ts` (SPEC-012)
+
+`getCached`/`setCached` son privados al módulo `src/utils/cache.ts` — nunca se exportan, así que ningún consumidor fuera de ese archivo construye una key de `localStorage` a mano. Todo el resto de la app pasa exclusivamente por seis wrappers de dominio exportados: `getProductsCache`/`setProductsCache`, `getProductDetailCache`/`setProductDetailCache` y `getCartCount`/`setCartCount`.
+
+- **`CacheKey`**: unión cerrada de template literals — `'products' | 'cartCount' | \`product_detail_${string}\`` — así el compilador impide construir una key fuera de esas tres formas.
+- **TTL opcional = nunca expira**, no "TTL 0": `getCached<T>(key, ttlMs?)` solo chequea expiración si `ttlMs !== undefined`. `getProductsCache`/`getProductDetailCache` pasan `PRODUCT_CACHE_TTL_MS` (constante exportada, 1 hora); `getCartCount`/`setCartCount` no pasan `ttlMs` — el contador de carrito no tiene fecha de vencimiento propia (ver justificación en la nota de "Detección de pérdida de sesión" más abajo).
+- **`cartCount` cambió de formato**: antes era un string numérico crudo en `localStorage`; ahora usa la misma envoltura JSON `{ data, timestamp }` que el resto del caché, vía `getCartCount`/`setCartCount`. Fue un breaking change de storage aceptado explícitamente (SPEC-012) — un valor viejo en el navegador simplemente falla el `JSON.parse`, cae al `catch` de `getCached` y se resetea a `0` una sola vez; no se implementó migración.
+
 ## 6. Contrato de vistas y componentes
 
 ### Rutas
@@ -247,7 +256,8 @@ src/
 ├── context/
 │   └── CartContext.tsx
 ├── utils/
-│   ├── cache.ts          → getCached/setCached genérico con TTL
+│   ├── cache.ts          → wrappers de dominio (SPEC-012); getCached/
+│   │                        setCached quedan privados al módulo
 │   ├── cache.test.ts
 │   ├── parsePrice.ts
 │   ├── parsePrice.test.ts
@@ -274,6 +284,8 @@ El enunciado exige cuatro scripts para gestionar la aplicación: START (modo des
 | `lint` | `eslint .` | Sí (LINT) | Lint estático |
 | `preview` | `vite preview` | Añadido por decisión | Sirve el build localmente, útil para verificar el resultado de `build` antes de desplegar |
 | `test:watch` | `vitest` | Añadido por decisión | Suite en modo watch, para desarrollo día a día |
+| `format` | `prettier --write .` | Añadido por decisión (SPEC-012) | Reformatea el repo con Prettier |
+| `format:check` | `prettier --check .` | Añadido por decisión (SPEC-012) | Verifica formato sin escribir — gate de CI/verificación |
 
 **Verificación empírica (TASK-002-0)**: el scaffold generado con `create-vite@latest -t react-ts --eslint` (2026-07-30) confirma ESLint `10.8.0` — dato que refleja la fila «Linter» de §2. El formato de config es flat (`eslint.config.js`), generado con los helpers `defineConfig`/`globalIgnores` de `eslint/config`: las exclusiones (p. ej. `dist`) se declaran vía `globalIgnores([...])` dentro del propio config, no en un archivo `.eslintignore` aparte — ese formato es legacy (ESLint ≤8) y las versiones actuales no lo leen por defecto. No hace falta excluir explícitamente `CLAUDE.md`, `README.md` u otros documentos: el propio config ya scopea el lint por extensión (`files: ['**/*.{ts,tsx}']`), así que `eslint .` nunca llega a evaluar Markdown.
 
@@ -337,6 +349,7 @@ A partir de la visión general de SPEC-001 (reflejado en este documento), el tra
 | SPEC-009 | Entrega: README final, accesibilidad, verificación de scripts |
 | SPEC-010 | Rediseño visual: paleta, tipografía, animaciones y layout (navbar sticky, breadcrumb en mobile) |
 | SPEC-011 | Feedback de éxito/error al añadir al carrito + reintentos automáticos con backoff lineal ante cold-start del backend |
+| SPEC-012 | Abstracción de caché: `cache.ts` pasa a exponer solo wrappers de dominio (`getProductsCache`, `getProductDetailCache`, `getCartCount`, etc.); `getCached`/`setCached` quedan privados al módulo. Migra `api/products.ts` y `context/CartContext.tsx` a consumir únicamente esos wrappers |
 
 El desglose en tareas (cantidad y contenido) se define por spec en el momento de aprobarla, siguiendo el orden de dependencias de esta tabla.
 

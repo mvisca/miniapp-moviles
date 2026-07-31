@@ -14,10 +14,11 @@ SPA en React + TypeScript para explorar un catálogo de teléfonos móviles: lis
 | Framework | React 19 + TypeScript (estricto) |
 | Bundler | Vite 8 |
 | Routing | React Router DOM v6 |
-| Testing | Vitest + React Testing Library — 132 tests |
+| Testing | Vitest + React Testing Library — 139 tests |
 | Estilos | CSS Modules |
 | Estado global | React Context (solo contador de carrito) |
 | Linter | ESLint |
+| Formateador | Prettier |
 
 ## Requisitos
 
@@ -35,6 +36,8 @@ pnpm preview       # sirve el build localmente
 pnpm test          # suite de tests (una pasada)
 pnpm test:watch    # suite de tests en modo watch
 pnpm lint          # lint estático
+pnpm format        # reformatea el código con Prettier
+pnpm format:check  # verifica formato sin escribir
 ```
 
 ## Backend
