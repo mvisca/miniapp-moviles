@@ -20,7 +20,7 @@ import {
   mapProductDetail,
   mapProductListItem,
 } from './products'
-import { setCached } from '../utils/cache'
+import { setProductDetailCache, setProductsCache } from '../utils/cache'
 import type { Product, ProductDetail } from '../types/domain'
 
 const requestMock = vi.mocked(request)
@@ -163,7 +163,7 @@ describe('getProducts', () => {
   })
 
   it('cache hit: returns the cached data without calling request', async () => {
-    setCached('products', mapped)
+    setProductsCache(mapped)
 
     const result = await getProducts()
 
@@ -173,7 +173,7 @@ describe('getProducts', () => {
 
   it('expired cache: refetches instead of returning the stale entry', async () => {
     vi.useFakeTimers()
-    setCached('products', mapped)
+    setProductsCache(mapped)
 
     vi.advanceTimersByTime(3600_000 + 1)
 
@@ -240,7 +240,7 @@ describe('getProductDetail', () => {
 
   it('cache hit: returns the cached data without calling request', async () => {
     const cachedDetail: ProductDetail = mapProductDetail(raw)
-    setCached('product_detail_1', cachedDetail)
+    setProductDetailCache('1', cachedDetail)
 
     const result = await getProductDetail('1')
 
@@ -251,7 +251,7 @@ describe('getProductDetail', () => {
   it('expired cache: refetches instead of returning the stale entry', async () => {
     vi.useFakeTimers()
     const cachedDetail: ProductDetail = mapProductDetail(raw)
-    setCached('product_detail_1', cachedDetail)
+    setProductDetailCache('1', cachedDetail)
 
     vi.advanceTimersByTime(3600_000 + 1)
 
